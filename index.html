@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<button id="theme" aria-label="Changer de thème" title="Thème clair / sombre">◐</button>
+<div id="tools"><button id="fm" aria-label="Réduire le texte" title="Texte plus petit">A−</button><button id="fp" aria-label="Agrandir le texte" title="Texte plus grand">A+</button><button id="theme" aria-label="Changer de thème" title="Thème clair / sombre">◐</button></div>
 <header>
   <h1>Les maths de début de seconde, facilement.</h1>
   <p>Comprends la leçon, puis entraîne-toi avec des exercices illimités et des corrections pas à pas.</p>
@@ -19,6 +19,10 @@
   <button data-m="l" role="tab">Leçon</button>
   <button data-m="e" role="tab">Exercices</button>
   <button data-m="n" role="tab">Notes</button>
+  <button data-m="s" role="tab">Stats</button>
+  <button data-m="r" role="tab">À revoir</button>
+  <button data-m="f" role="tab">Formules</button>
+  <button data-m="o" role="tab">Outils</button>
 </div>
 <main>
   <section id="lesson"></section>
@@ -26,7 +30,12 @@
     <div class="bar">
       <button id="gen" class="primary">Nouveaux exercices</button>
       <button id="all">Tout corriger</button>
+      <button id="vall">Tout vérifier</button>
+      <button id="pex">Imprimer</button>
+      <select id="cnt" aria-label="Nombre d'exercices"><option value="3">3 exercices</option><option value="5">5 exercices</option><option value="10">10 exercices</option></select>
+      <select id="lvl" aria-label="Difficulté"><option value="0">Facile</option><option value="1">Normal</option><option value="2">Difficile</option></select>
       <span id="score" class="score" title="Réussites du premier coup"></span><button id="rz" title="Remettre le score à zéro">↺</button>
+      <span id="chr" class="score" title="Temps"></span><progress id="goal" max="10" value="0" title="Objectif du jour"></progress>
     </div>
     <div id="list"></div>
   </section>
@@ -35,8 +44,21 @@
       <div class="sym" id="nsym"></div>
       <div class="ngrid"><textarea id="ntxt" spellcheck="false" placeholder="Écris tes notes ici…"></textarea><div id="nprev" class="nprev"></div></div>
       <p class="nhelp">Tape <code>3/4</code>, <code>x^2</code>, <code>sqrt(x)</code>, <code>&lt;=</code>, <code>-&gt;</code>, <code>*</code> : c'est mis en forme automatiquement. <code># titre</code> pour un titre, <code>&gt; texte</code> pour une remarque.</p>
-      <div class="bar"><button id="ncopy">Copier</button><button id="ndl">Télécharger</button><button id="nclr">Tout effacer</button></div>
+      <div class="bar"><button id="ncopy">Copier</button><button id="ndl">Télécharger</button><select id="npage" aria-label="Page de notes"><option value="0">Note 1</option><option value="1">Note 2</option><option value="2">Note 3</option></select>
+      <select id="nfm" aria-label="Insérer une formule"><option value="">Insérer une formule…</option><option>(a+b)^2 = a^2 + 2ab + b^2</option><option>(a-b)^2 = a^2 - 2ab + b^2</option><option>(a+b)(a-b) = a^2 - b^2</option><option>A*B = 0 <=> A = 0 ou B = 0</option><option>A/B = 0 <=> A = 0 et B != 0</option></select>
+      <button id="nprint">Imprimer</button><button id="nclr">Tout effacer</button><span id="ncount" class="score"></span></div>
     </div>
+  </section>
+  <section id="stats" hidden></section>
+  <section id="redo" hidden></section>
+  <section id="forms" hidden></section>
+  <section id="lab" hidden>
+    <h2>Comparer deux expressions</h2>
+    <div class="card"><div class="tl"><input id="t1a" placeholder="ex : (x+3)^2" autocomplete="off"><input id="t1b" placeholder="ex : x^2+6x+9" autocomplete="off"><button id="t1">Comparer</button></div><p id="t1o" class="fb"></p></div>
+    <h2>Calculer pour une valeur de x</h2>
+    <div class="card"><div class="tl"><input id="t2a" placeholder="ex : 2x-5" autocomplete="off"><input id="t2b" placeholder="x = 3" autocomplete="off"><button id="t2">Calculer</button></div><p id="t2o" class="fb"></p></div>
+    <h2>Trouver les solutions de f(x) = 0</h2>
+    <div class="card"><div class="tl"><input id="t3a" placeholder="ex : (2x-6)(x+5)" autocomplete="off"><button id="t3">Résoudre</button></div><p id="t3o" class="fb"></p></div>
   </section>
 </main>
 <script src="script.js"></script>

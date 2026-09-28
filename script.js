@@ -1,7 +1,8 @@
 const ls={g:k=>{try{return localStorage.getItem(k)}catch(_){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
 const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const P=a=>a[R(0,a.length-1)];
-const nz=m=>{let v=0;while(!v)v=R(-m,m);return v};
+let lvl=ls.g('mLvl')===null?1:+ls.g('mLvl');
+const nz=m=>{m=Math.max(2,Math.round(m*[.5,1,1.6][lvl]||m));let v=0;while(!v)v=R(-m,m);return v};
 const gcd=(a,b)=>b?gcd(b,a%b):Math.abs(a);
 const S=n=>n<0?'−'+(-n):''+n;
 const fr=(n,d)=>{const g=gcd(n,d)||1;n/=g;d/=g;if(d<0){n=-n;d=-d}return d===1?S(n):S(n)+'/'+d};
@@ -136,19 +137,24 @@ ${box('warn','Erreurs fréquentes','<p>Oublier de chercher la valeur interdite a
 ${box('keep','À retenir','<p>Ordre de travail : 1) valeur interdite, 2) numérateur = 0, 3) comparer, 4) conclure.</p>')}`
 };
 const T=[{n:'Identités remarquables',g:dev},{n:'Factoriser',g:fac},{n:'Produit nul',g:prod},{n:'Quotient nul',g:quot}];
-let cur=+ls.g('mCur')||0,mode=ls.g('mMode')||'l';if(!(cur>=0&&cur<T.length))cur=0;if(!'len'.includes(mode))mode='l';
+let cur=+ls.g('mCur')||0,mode=ls.g('mMode')||'l';if(!(cur>=0&&cur<T.length))cur=0;if(!'lensrfo'.includes(mode))mode='l';
 const $=id=>document.getElementById(id),tabs=$('tabs');
 function sq(){
   const a=+$('ra').value,b=+$('rb').value;$('va').textContent=a;$('vb').textContent=b;
   const A=`<span class="cA">${a}</span>`,B=`<span class="cB">${b}</span>`;
   $('sqt').innerHTML=`<p>(${A} + ${B})² = ${A}² + 2 × ${A} × ${B} + ${B}²</p><p>= ${a*a} + ${2*a*b} + ${b*b}</p><p>= ${(a+b)**2}</p><p><em>Vérification : (${a} + ${b})² = ${a+b}² = ${(a+b)**2} ✓</em></p>`;
 }
+let curEx=[],chI=null,chS0=0;
+function chrono(){clearInterval(chI);chS0=Date.now();const el=$('chr'),f=()=>{const t=Math.floor((Date.now()-chS0)/1000);el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};f();chI=setInterval(f,1000)}
 function render(){
+  if(mode!=='e')clearInterval(chI);
   tabs.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-selected',i===cur));
   $('mode').querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.m===mode));
-  $('lesson').hidden=mode!=='l';$('train').hidden=mode!=='e';$('notes').hidden=mode!=='n';tabs.hidden=mode==='n';ls.s('mCur',cur);ls.s('mMode',mode);
-  if(mode==='l'){$('lesson').innerHTML=L[cur]();if(cur===0){$('ra').oninput=$('rb').oninput=sq;sq()}}
-  else if(mode==='e')$('list').innerHTML=Array.from({length:5},()=>T[cur].g()).map(e=>`<article class="card"><p class="cons">${e.c}</p><div class="math">${e.q}</div>${ansBox(e)}<details><summary>Correction pas à pas</summary>${stepper(e.s)}</details></article>`).join('');
+  ['l:lesson','e:train','n:notes','s:stats','r:redo','f:forms','o:lab'].forEach(x=>{const[m,id]=x.split(':');$(id).hidden=mode!==m});
+  tabs.hidden=mode!=='l'&&mode!=='e';ls.s('mCur',cur);ls.s('mMode',mode);
+  if(mode==='l'){$('lesson').innerHTML=L[cur]()+'<div class="bar"><button id="rd"></button><button id="nx">Exercices de ce chapitre →</button></div>';rdb();if(cur===0){$('ra').oninput=$('rb').oninput=sq;sq()}}
+  else if(mode==='e'){curEx=Array.from({length:+$('cnt').value||5},()=>T[cur].g());$('list').innerHTML=curEx.map((e,i)=>`<article class="card" data-i="${i}"><p class="cons">${e.c}</p><div class="math">${e.q}</div>${ansBox(e)}<details><summary>Correction pas à pas</summary>${stepper(e.s)}</details></article>`).join('');chrono()}
+  else if(mode==='s')statsView();else if(mode==='r')redoView();else if(mode==='f')formsView();
 }
 T.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t.n;b.onclick=()=>{cur=i;render()};tabs.appendChild(b)});
 $('mode').onclick=e=>{if(e.target.dataset.m){mode=e.target.dataset.m;render()}};
@@ -162,14 +168,16 @@ document.addEventListener('click',e=>{
 
 const SYM=['x','²','(',')','+','−','×','/','=','≠','⇔',';','{','}','∅','S = ','ou'];
 const ansOf=e=>{const m=[...e.s.map(x=>x.h).join('').matchAll(/class="ans">(.*?)<\/p>/g)];return m.length?m[m.length-1][1].replace(/<[^>]+>/g,''):''};
-const ansBox=e=>{const t=ansOf(e),k=cur===0?'d':cur===1?'f':'s';return `<div class="abox" data-k="${k}" data-a="${t.replace(/"/g,'&quot;')}"><div class="sym">${SYM.map(c=>`<button type="button" class="sy" data-s="${c}">${c.trim()}</button>`).join('')}<button type="button" class="sy clr" data-s="">Effacer</button></div><div class="arow"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Écris ta réponse ici…" aria-label="Ta réponse"><button type="button" class="chk">Vérifier</button></div><p class="fb" role="status"></p></div>`};
-const ev=(s,x)=>{try{s=s.replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/').replace(/²/g,'^2').replace(/,/g,'.').replace(/\s+/g,'');
+const ansBox=e=>{const t=ansOf(e),k=cur===0?'d':cur===1?'f':'s';return `<div class="abox" data-k="${k}" data-a="${t.replace(/"/g,'&quot;')}"><div class="sym">${SYM.map(c=>`<button type="button" class="sy" data-s="${c}">${c.trim()}</button>`).join('')}<button type="button" class="sy clr" data-s="">Effacer</button></div><div class="arow"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Écris ta réponse ici…" aria-label="Ta réponse"><button type="button" class="chk">Vérifier</button><button type="button" class="hint">Indice</button><button type="button" class="show">Réponse</button></div><p class="fb" role="status"></p></div>`};
+const prep=s=>{s=s.replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/').replace(/²/g,'^2').replace(/,/g,'.').replace(/\s+/g,'');
   s=s.replace(/(\d|x|\))(?=x|\()/g,'$1*').replace(/\)(?=\d)/g,')*').replace(/(\d)(?=x)/g,'$1*');
   let q;do{q=s;s=s.replace(/(x|\d+(?:\.\d+)?|\([^()]*\))\^(\d+)/g,'($1**$2)')}while(q!==s);
-  if(!/^[0-9x+\-*/().]+$/.test(s))return NaN;return new Function('x','return '+s)(x)}catch(_){return NaN}};
+  return /^[0-9x+\-*/().]+$/.test(s)?s:null};
+const mk=s=>{try{const p=prep(s);if(!p)return()=>NaN;const f=new Function('x','return '+p);return x=>{try{return f(x)}catch(_){return NaN}}}catch(_){return()=>NaN}};
+const ev=(s,x)=>mk(s)(x);
 const same=(u,v)=>[-2,-1,.5,1,2,3,7].every(x=>{const a=ev(u,x),b=ev(v,x);return isFinite(a)&&isFinite(b)&&Math.abs(a-b)<1e-6*(1+Math.abs(b))});
 const setV=s=>{s=s.replace(/^\s*S\s*=/i,'').replace(/[{}]/g,'').trim();if(!s||/^(∅|ø|vide)$/i.test(s))return[];return s.split(/;|\bou\b/).map(i=>ev(i.replace(/^\s*x\s*=/,''),0)).sort((a,b)=>a-b)};
-function verify(box){
+function verify(box,q){
   const inp=box.querySelector('input'),fb=box.querySelector('.fb'),k=box.dataset.k,ea=box.dataset.a;
   let v=inp.value.trim(),ok=false,msg='';
   if(!v){fb.className='fb bad';fb.textContent='Écris une réponse avant de vérifier.';return}
@@ -177,9 +185,9 @@ function verify(box){
   else{const r=x=>x.slice(x.lastIndexOf('=')+1),u=r(v),w=ea.slice(ea.indexOf('=')+1);
     if(same(u,w)){if(k==='d'&&/[()]/.test(u))msg='Le résultat est juste mais pas encore développé et réduit.';else if(k==='f'&&!/\)/.test(u))msg='Le résultat est juste mais pas encore factorisé.';else ok=true}}
   fb.className='fb '+(ok?'good':'bad');
-  if(!box.dataset.t){box.dataset.t=1;sc.t++;if(ok)sc.c++;ls.s('mScore',JSON.stringify(sc));showScore()}
-  if(ok){const n=box.closest('article').nextElementSibling,ni=n&&n.querySelector('.abox input');if(ni)setTimeout(()=>{ni.focus();ni.scrollIntoView({block:'center',behavior:'smooth'})},700)}
-  fb.textContent=ok?'✓ Bravo, c\'est correct !':(msg||'✗ Ce n\'est pas la bonne réponse. Ouvre la correction pas à pas.');
+  const first=tally(box,ok);
+  if(ok&&!q){const n=box.closest('article').nextElementSibling,ni=n&&n.querySelector('.abox input');if(ni)setTimeout(()=>{ni.focus();ni.scrollIntoView({block:'center',behavior:'smooth'})},700)}
+  fb.textContent=ok?'✓ Bravo, c\'est correct !'+(first&&sc.s%5===0?` Série de ${sc.s} !`:''):(msg||'✗ Ce n\'est pas la bonne réponse. Ouvre la correction pas à pas.');
 }
 document.addEventListener('click',e=>{
   const sy=e.target.closest('.sy'),ck=e.target.closest('.chk');
@@ -190,9 +198,10 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.abox input'))verify(e.target.closest('.abox'))});
 
+let rd=[];try{rd=JSON.parse(ls.g('mRead'))||[]}catch(_){}
 let sc={c:0,t:0};try{sc=JSON.parse(ls.g('mScore'))||sc}catch(_){}
-function showScore(){$('score').textContent=sc.t?`Score : ${sc.c} / ${sc.t}`:''}
-$('rz').onclick=()=>{sc={c:0,t:0};ls.s('mScore',JSON.stringify(sc));showScore()};
+function showScore(){$('score').textContent=sc.t?`Score : ${sc.c} / ${sc.t}${sc.s>1?` · Série ${sc.s}`:''}`:'';T.forEach((t,i)=>{const k=sc.k&&sc.k[i];tabs.children[i].textContent=(rd[i]?'✓ ':'')+t.n+(k?` · ${k.c}/${k.t}`:'')})}
+$('rz').onclick=()=>{sc={c:0,t:0,k:{}};ls.s('mScore',JSON.stringify(sc));showScore()};
 showScore();
 const th=$('theme'),setTh=d=>{document.documentElement.dataset.theme=d?'dark':'light';ls.s('mDark',d?1:0)};
 setTh(ls.g('mDark')!==null?ls.g('mDark')==='1':matchMedia('(prefers-color-scheme:dark)').matches);
@@ -209,10 +218,80 @@ function fmt(l){
 const fmtAll=t=>t.split('\n').map(l=>!l.trim()?'<br>':l.startsWith('# ')?'<h3>'+fmt(l.slice(2))+'</h3>':l.startsWith('> ')?'<div class="keep">'+fmt(l.slice(2))+'</div>':'<p>'+fmt(l)+'</p>').join('');
 const nt=$('ntxt'),np=$('nprev');
 $('nsym').innerHTML=['x','²','√','π','∞','≤','≥','≠','→','⇔','ℝ','∅','±','×','−','(',')','{','}'].map(c=>`<button type="button" class="sy" data-s="${c}">${c}</button>`).join('');
-nt.value=ls.g('mNotes')||'';
-nt.oninput=()=>{ls.s('mNotes',nt.value);np.innerHTML=fmtAll(nt.value)};
+let pg=+ls.g('mNp')||0;if(!(pg>=0&&pg<3))pg=0;const nkey=i=>i?'mNotes'+i:'mNotes';nt.value=ls.g(nkey(pg))||'';
+nt.oninput=()=>{ls.s(nkey(pg),nt.value);np.innerHTML=fmtAll(nt.value);$('ncount').textContent=nt.value.length+' caractères'};
 nt.oninput();
 $('ncopy').onclick=async()=>{try{await navigator.clipboard.writeText(np.innerText);$('ncopy').textContent='Copié ✓';setTimeout(()=>$('ncopy').textContent='Copier',1500)}catch(_){}};
 $('ndl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([np.innerText],{type:'text/plain'}));a.download='notes-maths.txt';a.click();URL.revokeObjectURL(a.href)};
 $('nclr').onclick=()=>{if(nt.value&&confirm('Effacer toutes les notes ?')){nt.value='';nt.oninput()}};
+
+document.addEventListener('click',e=>{
+  const hb=e.target.closest('.hint');if(!hb)return;
+  const box=hb.closest('.abox'),fb=box.querySelector('.fb'),t=box.closest('article').querySelector('.s h4');
+  fb.className='fb hint';fb.textContent='Indice : '+(t?t.textContent:'relis la leçon')+'.';
+});
+$('vall').onclick=()=>document.querySelectorAll('#list .abox').forEach(b=>b.querySelector('input').value.trim()&&verify(b,1));
+$('cnt').value=ls.g('mCnt')||'5';
+$('cnt').onchange=()=>{ls.s('mCnt',$('cnt').value);render()};
+let fs=+ls.g('mFs')||100;
+const setFs=v=>{fs=Math.max(85,Math.min(140,v));document.documentElement.style.fontSize=fs+'%';ls.s('mFs',fs)};
+setFs(fs);$('fm').onclick=()=>setFs(fs-10);$('fp').onclick=()=>setFs(fs+10);
+
+function tally(box,ok){if(box.dataset.t)return 0;box.dataset.t=1;sc.t++;if(ok)sc.c++;sc.s=ok?(sc.s||0)+1:0;sc.b=Math.max(sc.b||0,sc.s);sc.k=sc.k||{};const kk=sc.k[cur]=sc.k[cur]||{c:0,t:0};kk.t++;if(ok)kk.c++;ls.s('mScore',JSON.stringify(sc));const g=gDay();g.n++;ls.s('mDay',JSON.stringify(g));if(!ok){const e=curEx[+box.closest('article').dataset.i];if(e)addWrong(e)}showScore();goalUp();return 1}
+function rdb(){const b=$('rd');if(!b)return;$('nx').onclick=()=>{mode='e';render();scrollTo(0,0)};const f=()=>{b.textContent=rd[cur]?'✓ Chapitre lu (annuler)':'Marquer comme lu'};f();b.onclick=()=>{rd[cur]=!rd[cur];ls.s('mRead',JSON.stringify(rd));f();showScore()}}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('.show');if(!b)return;
+  const box=b.closest('.abox'),fb=box.querySelector('.fb');tally(box,false);fb.className='fb hint';fb.textContent='Réponse : '+box.dataset.a;
+});
+document.addEventListener('keydown',e=>{
+  if(!e.altKey)return;const m={Digit1:'l',Digit2:'e',Digit3:'n',Digit4:'s',Digit5:'r',Digit6:'f',Digit7:'o'}[e.code];
+  if(m){mode=m;render();e.preventDefault()}else if(e.code==='KeyN'&&mode==='e'){render();e.preventDefault()}
+});
+$('nfm').onchange=()=>{const v=$('nfm').value;if(!v)return;const a=nt.selectionStart,b=nt.selectionEnd;nt.value=nt.value.slice(0,a)+v+'\n'+nt.value.slice(b);$('nfm').selectedIndex=0;nt.oninput();nt.focus()};
+$('nprint').onclick=()=>{document.body.classList.add('pn');print();document.body.classList.remove('pn')};
+showScore();
+
+const GOAL=10,today=()=>new Date().toISOString().slice(0,10);
+const gDay=()=>{let g;try{g=JSON.parse(ls.g('mDay'))}catch(_){}return g&&g.d===today()?g:{d:today(),n:0}};
+function goalUp(){const g=$('goal');g.max=GOAL;g.value=Math.min(gDay().n,GOAL)}
+let wr=[];try{wr=JSON.parse(ls.g('mWrong'))||[]}catch(_){}
+function addWrong(e){wr.unshift({ch:cur,c:e.c,q:e.q,s:stepper(e.s)});wr=wr.slice(0,30);ls.s('mWrong',JSON.stringify(wr))}
+function redoView(){
+  $('redo').innerHTML='<h2>À revoir</h2>'+(wr.length?'<div class="bar"><button id="wclr">Tout vider</button></div>'+wr.map((w,i)=>`<article class="card"><p class="cons">${T[w.ch].n} · ${w.c}</p><div class="math">${w.q}</div><details><summary>Correction pas à pas</summary>${w.s}</details><button class="wdel" data-i="${i}">Retirer</button></article>`).join(''):'<div class="card"><p>Rien à revoir pour l\'instant : tes erreurs apparaîtront ici.</p></div>');
+}
+$('redo').onclick=e=>{const d=e.target.closest('.wdel');if(d){wr.splice(+d.dataset.i,1);ls.s('mWrong',JSON.stringify(wr));redoView()}if(e.target.id==='wclr'){wr=[];ls.s('mWrong','[]');redoView()}};
+function statsView(){
+  const k=sc.k||{},pc=sc.t?Math.round(100*sc.c/sc.t):0,gd=gDay();
+  $('stats').innerHTML=`<h2>Ta progression</h2><div class="card"><div class="kpis"><div><b>${sc.t}</b><span>exercices faits</span></div><div><b>${pc}%</b><span>réussite du 1er coup</span></div><div><b>${sc.b||0}</b><span>meilleure série</span></div><div><b>${rd.filter(Boolean).length}/${T.length}</b><span>leçons lues</span></div></div></div><h2>Par chapitre</h2><div class="card">${T.map((t,i)=>{const c=k[i]||{c:0,t:0},p=c.t?Math.round(100*c.c/c.t):0;return `<p class="cbar"><span>${t.n} <em>${c.c}/${c.t}</em></span><i><u style="width:${p}%"></u></i></p>`}).join('')}</div><h2>Objectif du jour</h2><div class="card"><p>${gd.n} / ${GOAL} exercices aujourd'hui</p><progress max="${GOAL}" value="${Math.min(gd.n,GOAL)}"></progress></div><h2>Sauvegarde</h2><div class="card bar"><button id="exp">Exporter ma progression</button><button id="imp">Importer</button><input type="file" id="impf" accept=".json" hidden><button id="rall">Tout réinitialiser</button></div>`;
+  $('exp').onclick=()=>{const o={};['mScore','mRead','mWrong','mDay','mNotes','mNotes1','mNotes2','mLvl','mCnt','mFs','mDark'].forEach(k=>{const v=ls.g(k);if(v!==null)o[k]=v});const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(o)],{type:'application/json'}));a.download='progression-maths.json';a.click();URL.revokeObjectURL(a.href)};
+  $('imp').onclick=()=>$('impf').click();
+  $('impf').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const o=JSON.parse(t);Object.keys(o).forEach(k=>/^m[A-Za-z0-9]+$/.test(k)&&ls.s(k,String(o[k])));location.reload()}catch(_){alert('Fichier invalide.')}})};
+  $('rall').onclick=()=>{if(confirm('Tout réinitialiser (score, notes, erreurs) ?')){['mScore','mRead','mWrong','mDay','mNotes','mNotes1','mNotes2'].forEach(k=>{try{localStorage.removeItem(k)}catch(_){}});location.reload()}};
+}
+const FM=[['Identités remarquables',['(a+b)^2 = a^2 + 2ab + b^2','(a-b)^2 = a^2 - 2ab + b^2','(a+b)(a-b) = a^2 - b^2']],['Factorisation',['ka + kb = k(a + b)','a^2 - b^2 = (a+b)(a-b)']],['Produit nul',['A*B = 0 <=> A = 0 ou B = 0']],['Quotient nul',['A/B = 0 <=> A = 0 et B != 0']]];
+function formsView(){$('forms').innerHTML='<h2>Formules à connaître</h2>'+FM.map(([t,a])=>`<div class="card"><h3>${t}</h3>${a.map(f=>`<div class="frm"><span class="f">${fmt(f)}</span><button data-f="${esc(f)}">Ajouter aux notes</button></div>`).join('')}</div>`).join('')}
+$('forms').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;nt.value+=(nt.value&&!nt.value.endsWith('\n')?'\n':'')+b.dataset.f+'\n';nt.oninput();b.textContent='Ajouté ✓';setTimeout(()=>b.textContent='Ajouter aux notes',1500)};
+$('npage').value=pg;$('npage').onchange=()=>{pg=+$('npage').value;ls.s('mNp',pg);nt.value=ls.g(nkey(pg))||'';nt.oninput()};
+$('lvl').value=lvl;$('lvl').onchange=()=>{lvl=+$('lvl').value;ls.s('mLvl',lvl);render()};
+$('pex').onclick=()=>{document.body.classList.add('pe');print();document.body.classList.remove('pe')};
+document.addEventListener('input',e=>{const i=e.target;if(!i.matches('.abox input'))return;const v=i.value,p=i.selectionStart,n=v.replace(/\^2/g,'²').replace(/\*/g,'×').replace(/<=>/g,'⇔').replace(/!=/g,'≠');if(n!==v){i.value=n;const c=p+n.length-v.length;i.setSelectionRange(c,c)}});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.tl input'))e.target.closest('.tl').querySelector('button').click()});
+const outp=(id,t,ok)=>{const o=$(id);o.className='fb '+(ok?'good':'bad');o.textContent=t};
+const fmtN=v=>{for(let d=1;d<=12;d++){const n=Math.round(v*d);if(Math.abs(v*d-n)<1e-6)return fr(n,d)}return String(+v.toFixed(6)).replace('-','−')};
+$('t1').onclick=()=>{const a=$('t1a').value,b=$('t1b').value;if(!a.trim()||!b.trim())return outp('t1o','Écris les deux expressions.',0);
+  if(same(a,b))outp('t1o','✓ Les deux expressions sont égales pour toutes les valeurs de x testées.',1);
+  else{const x=[-2,-1,.5,1,2,3,7].find(x=>!(Math.abs(ev(a,x)-ev(b,x))<1e-6)),va=ev(a,x),vb=ev(b,x);outp('t1o',isFinite(va)&&isFinite(vb)?`✗ Différentes : pour x = ${fmtN(x)}, on obtient ${fmtN(va)} et ${fmtN(vb)}.`:'✗ Expression non reconnue. Vérifie les parenthèses et les signes.',0)}};
+$('t2').onclick=()=>{const x=ev($('t2b').value.replace(/^\s*x\s*=/,''),0),v=ev($('t2a').value,x);outp('t2o',isFinite(v)?`f(${fmtN(x)}) = ${fmtN(v)}`:'Expression ou valeur non reconnue.',isFinite(v))};
+function roots(e){const f=mk(e),r=[],h=.01,add=v=>{if(!r.some(u=>Math.abs(u-v)<1e-4))r.push(v)};
+  let px=-50,pv=f(px);
+  for(let i=1;i<=10000;i++){const x=-50+i*h,v=f(x);
+    if(isFinite(pv)&&isFinite(v)){
+      if(pv===0)add(px);
+      else if(pv*v<0){let a=px,b=x;for(let k=0;k<60;k++){const m=(a+b)/2;if(f(a)*f(m)<=0)b=m;else a=m}const m=(a+b)/2;if(Math.abs(f(m))<1e-6)add(m)}
+      else{const nv=f(x+h);if(isFinite(nv)&&Math.abs(v)<Math.abs(pv)&&Math.abs(v)<=Math.abs(nv)&&Math.abs(v)<.5){let a=px,b=x+h;for(let k=0;k<80;k++){const m1=a+(b-a)/3,m2=b-(b-a)/3;if(Math.abs(f(m1))<Math.abs(f(m2)))b=m2;else a=m1}const m=(a+b)/2;if(Math.abs(f(m))<1e-6)add(m)}}
+    }
+    px=x;pv=v}
+  return r.sort((a,b)=>a-b)}
+$('t3').onclick=()=>{const e=$('t3a').value;if(!e.trim())return outp('t3o','Écris une expression.',0);if(!isFinite(mk(e)(1))&&!isFinite(mk(e)(2)))return outp('t3o','Expression non reconnue.',0);const r=roots(e);outp('t3o',r.length?`S = {${r.map(fmtN).join(' ; ')}}`:'Aucune solution trouvée entre −50 et 50 : S = ∅',1)};
+goalUp();
 render();
