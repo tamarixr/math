@@ -111,8 +111,8 @@ function quot(){
 const box=(k,t,h)=>`<div class="${k}"><b>${t}</b> ${h}</div>`;
 const ex=(t,s)=>`<div class="card"><h3>${t}</h3>${stepper(s)}</div>`;
 const L={
-0:()=>`<h2>À quoi ça sert ?</h2><div class="card"><p>Une identité remarquable est un raccourci pour développer un carré ou un produit particulier, sans refaire tous les calculs. Elle marche dans les deux sens : développer (enlever les parenthèses) ou factoriser (les remettre).</p></div>
-<h2>Vois-le avec des aires</h2><div class="card"><p>Un carré de côté a + b se découpe en 4 morceaux. Bouge les curseurs.</p><div class="viz"><div id="sqb" class="sqb"><div class="q1"></div><div class="q2"></div><div class="q3"></div><div class="q4"></div></div><div><label>a <input type="range" id="ra" min="1" max="6" value="4"></label><label>b <input type="range" id="rb" min="1" max="6" value="2"></label><p class="f" id="sqt"></p></div></div></div>
+0:()=>`<h2>L'idée en une phrase</h2><div class="card"><p>Une identité remarquable est une <b>formule toute prête</b> : tu repères A et B, tu les remplaces, et c'est terminé. Développer = enlever les parenthèses. Factoriser = les remettre.</p></div>
+<h2>Essaie avec des nombres</h2><div class="card"><p>Change <span class="cA">A</span> et <span class="cB">B</span> : la formule (A + B)² marche toujours.</p><div class="viz"><div><label><span class="cA">A</span> = <b id="va"></b> <input type="range" id="ra" min="1" max="9" value="3"></label><label><span class="cB">B</span> = <b id="vb"></b> <input type="range" id="rb" min="1" max="9" value="2"></label></div><div id="sqt" class="f"></div></div></div>
 <h2>Les trois identités</h2><div class="card"><div class="f">(a + b)² = a² + 2ab + b²</div><div class="f">(a − b)² = a² − 2ab + b²</div><div class="f">(a + b)(a − b) = a² − b²</div></div>
 ${ex('Exemple : développer (3x + 2)²',[st('Repérer',p('A = 3x et B = 2, on utilise (A + B)².')),st('Formule',p('A² + 2AB + B²')),st('Calcul',p('(3x)² + 2 × 3x × 2 + 2²')),st('Résultat',p('9x² + 12x + 4','ans'))])}
 ${ex('Exemple : développer (5x + 1)(5x − 1)',[st('Repérer',p('A = 5x et B = 1, on utilise (A + B)(A − B).')),st('Formule',p('A² − B²')),st('Résultat',p('25x² − 1','ans'))])}
@@ -138,10 +138,9 @@ const T=[{n:'Identités remarquables',g:dev},{n:'Factoriser',g:fac},{n:'Produit 
 let cur=0,mode='l';
 const $=id=>document.getElementById(id),tabs=$('tabs');
 function sq(){
-  const a=+$('ra').value,b=+$('rb').value,g=$('sqb').style;
-  g.gridTemplateColumns=`${a}fr ${b}fr`;g.gridTemplateRows=`${a}fr ${b}fr`;
-  const q=$('sqb').children;q[0].textContent=`a² = ${a*a}`;q[1].textContent=`ab = ${a*b}`;q[2].textContent=`ab = ${a*b}`;q[3].textContent=`b² = ${b*b}`;
-  $('sqt').textContent=`(${a} + ${b})² = ${a*a} + ${2*a*b} + ${b*b} = ${(a+b)**2}`;
+  const a=+$('ra').value,b=+$('rb').value;$('va').textContent=a;$('vb').textContent=b;
+  const A=`<span class="cA">${a}</span>`,B=`<span class="cB">${b}</span>`;
+  $('sqt').innerHTML=`<p>(${A} + ${B})² = ${A}² + 2 × ${A} × ${B} + ${B}²</p><p>= ${a*a} + ${2*a*b} + ${b*b}</p><p>= ${(a+b)**2}</p><p><em>Vérification : (${a} + ${b})² = ${a+b}² = ${(a+b)**2} ✓</em></p>`;
 }
 function render(){
   tabs.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-selected',i===cur));

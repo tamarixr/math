@@ -54,3 +54,4 @@ details[open] summary{background:var(--mint)}
 .viz label{display:block;font-weight:500;margin-bottom:.5rem}
 .viz input{accent-color:var(--peri);width:160px;vertical-align:middle}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.cA{color:var(--peri);font-weight:700}.cB{color:#E8590C;font-weight:700}#sqt p{margin:.15rem 0}#sqt em{font-family:"DM Sans",sans-serif;font-size:.85rem;color:var(--soft);font-style:normal}
