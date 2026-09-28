@@ -1,3 +1,4 @@
+const ls={g:k=>{try{return localStorage.getItem(k)}catch(_){return null}},s:(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}}};
 const R=(a,b)=>Math.floor(Math.random()*(b-a+1))+a;
 const P=a=>a[R(0,a.length-1)];
 const nz=m=>{let v=0;while(!v)v=R(-m,m);return v};
@@ -135,7 +136,7 @@ ${box('warn','Erreurs fréquentes','<p>Oublier de chercher la valeur interdite a
 ${box('keep','À retenir','<p>Ordre de travail : 1) valeur interdite, 2) numérateur = 0, 3) comparer, 4) conclure.</p>')}`
 };
 const T=[{n:'Identités remarquables',g:dev},{n:'Factoriser',g:fac},{n:'Produit nul',g:prod},{n:'Quotient nul',g:quot}];
-let cur=0,mode='l';
+let cur=+ls.g('mCur')||0,mode=ls.g('mMode')||'l';if(!(cur>=0&&cur<T.length))cur=0;if(!'len'.includes(mode))mode='l';
 const $=id=>document.getElementById(id),tabs=$('tabs');
 function sq(){
   const a=+$('ra').value,b=+$('rb').value;$('va').textContent=a;$('vb').textContent=b;
@@ -145,9 +146,9 @@ function sq(){
 function render(){
   tabs.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-selected',i===cur));
   $('mode').querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.m===mode));
-  $('lesson').hidden=mode!=='l';$('train').hidden=mode!=='e';
+  $('lesson').hidden=mode!=='l';$('train').hidden=mode!=='e';$('notes').hidden=mode!=='n';tabs.hidden=mode==='n';ls.s('mCur',cur);ls.s('mMode',mode);
   if(mode==='l'){$('lesson').innerHTML=L[cur]();if(cur===0){$('ra').oninput=$('rb').oninput=sq;sq()}}
-  else $('list').innerHTML=Array.from({length:5},()=>T[cur].g()).map(e=>`<article class="card"><p class="cons">${e.c}</p><div class="math">${e.q}</div>${ansBox(e)}<details><summary>Correction pas à pas</summary>${stepper(e.s)}</details></article>`).join('');
+  else if(mode==='e')$('list').innerHTML=Array.from({length:5},()=>T[cur].g()).map(e=>`<article class="card"><p class="cons">${e.c}</p><div class="math">${e.q}</div>${ansBox(e)}<details><summary>Correction pas à pas</summary>${stepper(e.s)}</details></article>`).join('');
 }
 T.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t.n;b.onclick=()=>{cur=i;render()};tabs.appendChild(b)});
 $('mode').onclick=e=>{if(e.target.dataset.m){mode=e.target.dataset.m;render()}};
@@ -176,14 +177,42 @@ function verify(box){
   else{const r=x=>x.slice(x.lastIndexOf('=')+1),u=r(v),w=ea.slice(ea.indexOf('=')+1);
     if(same(u,w)){if(k==='d'&&/[()]/.test(u))msg='Le résultat est juste mais pas encore développé et réduit.';else if(k==='f'&&!/\)/.test(u))msg='Le résultat est juste mais pas encore factorisé.';else ok=true}}
   fb.className='fb '+(ok?'good':'bad');
+  if(!box.dataset.t){box.dataset.t=1;sc.t++;if(ok)sc.c++;ls.s('mScore',JSON.stringify(sc));showScore()}
+  if(ok){const n=box.closest('article').nextElementSibling,ni=n&&n.querySelector('.abox input');if(ni)setTimeout(()=>{ni.focus();ni.scrollIntoView({block:'center',behavior:'smooth'})},700)}
   fb.textContent=ok?'✓ Bravo, c\'est correct !':(msg||'✗ Ce n\'est pas la bonne réponse. Ouvre la correction pas à pas.');
 }
 document.addEventListener('click',e=>{
   const sy=e.target.closest('.sy'),ck=e.target.closest('.chk');
-  if(sy){const i=sy.closest('.abox').querySelector('input'),t=sy.dataset.s;
+  if(sy){const i=sy.closest('.abox,.nbox').querySelector('input,textarea'),t=sy.dataset.s;
     if(!t){i.value='';i.focus();return}
-    const a=i.selectionStart??i.value.length,b=i.selectionEnd??a;i.value=i.value.slice(0,a)+t+i.value.slice(b);i.focus();i.setSelectionRange(a+t.length,a+t.length)}
+    const a=i.selectionStart??i.value.length,b=i.selectionEnd??a;i.value=i.value.slice(0,a)+t+i.value.slice(b);i.focus();i.setSelectionRange(a+t.length,a+t.length);i.dispatchEvent(new Event('input'))}
   if(ck)verify(ck.closest('.abox'));
 });
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.abox input'))verify(e.target.closest('.abox'))});
+
+let sc={c:0,t:0};try{sc=JSON.parse(ls.g('mScore'))||sc}catch(_){}
+function showScore(){$('score').textContent=sc.t?`Score : ${sc.c} / ${sc.t}`:''}
+$('rz').onclick=()=>{sc={c:0,t:0};ls.s('mScore',JSON.stringify(sc));showScore()};
+showScore();
+const th=$('theme'),setTh=d=>{document.documentElement.dataset.theme=d?'dark':'light';ls.s('mDark',d?1:0)};
+setTh(ls.g('mDark')!==null?ls.g('mDark')==='1':matchMedia('(prefers-color-scheme:dark)').matches);
+th.onclick=()=>setTh(document.documentElement.dataset.theme!=='dark');
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'),strip=t=>t.replace(/^\((.*)\)$/,'$1');
+const tk='(\\([^()]*\\)|\\d[\\d.]*[a-zA-Z]?|[a-zA-Z])',fracRe=new RegExp('(?<![\\w.)²])'+tk+'/'+tk+'(?![\\w.(])','g');
+function fmt(l){
+  let s=l.replace(/<=>/g,'⇔').replace(/=>/g,'⇒').replace(/<=/g,'≤').replace(/>=/g,'≥').replace(/!=/g,'≠').replace(/->/g,'→').replace(/\+-/g,'±')
+   .replace(/sqrt/gi,'√').replace(/\bpi\b/gi,'π').replace(/\binf(ini)?\b/gi,'∞').replace(/\bRR\b/g,'ℝ').replace(/\bvide\b/gi,'∅')
+   .replace(/\*/g,'×').replace(/(^|[\s(=;{])-(?=[\dx(√])/g,'$1−').replace(/(?<=[\dx)²])-(?=[\dx(])/g,'−').replace(/ - /g,' − ');
+  s=esc(s).replace(/\^(-?\w+|\([^()]*\))/g,(m,a)=>'<sup>'+strip(a)+'</sup>');
+  return s.replace(fracRe,(m,a,b)=>F(strip(a),strip(b)));
+}
+const fmtAll=t=>t.split('\n').map(l=>!l.trim()?'<br>':l.startsWith('# ')?'<h3>'+fmt(l.slice(2))+'</h3>':l.startsWith('> ')?'<div class="keep">'+fmt(l.slice(2))+'</div>':'<p>'+fmt(l)+'</p>').join('');
+const nt=$('ntxt'),np=$('nprev');
+$('nsym').innerHTML=['x','²','√','π','∞','≤','≥','≠','→','⇔','ℝ','∅','±','×','−','(',')','{','}'].map(c=>`<button type="button" class="sy" data-s="${c}">${c}</button>`).join('');
+nt.value=ls.g('mNotes')||'';
+nt.oninput=()=>{ls.s('mNotes',nt.value);np.innerHTML=fmtAll(nt.value)};
+nt.oninput();
+$('ncopy').onclick=async()=>{try{await navigator.clipboard.writeText(np.innerText);$('ncopy').textContent='Copié ✓';setTimeout(()=>$('ncopy').textContent='Copier',1500)}catch(_){}};
+$('ndl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([np.innerText],{type:'text/plain'}));a.download='notes-maths.txt';a.click();URL.revokeObjectURL(a.href)};
+$('nclr').onclick=()=>{if(nt.value&&confirm('Effacer toutes les notes ?')){nt.value='';nt.oninput()}};
 render();

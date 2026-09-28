@@ -66,3 +66,16 @@ details[open] summary{background:var(--mint)}
 .chk{padding:.55rem 1.2rem;border-radius:10px;border:0;background:var(--peri);color:#fff;font-weight:700}
 .fb{margin:.5rem 0 0;font-weight:700;min-height:0}
 .fb.good{color:#0B7A55}.fb.bad{color:#C2410C}
+
+:root[data-theme=dark]{--paper:#171226;--ink:#EEEAFB;--soft:#A79FC4;--lilac:#372E5E;--peri:#8B7CFF;--peach:#5A3A2B;--mint:#1F4A3B;--white:#221B3A}
+:root[data-theme=dark] .fb.good{color:#5EE0B0}:root[data-theme=dark] .fb.bad{color:#FFA070}:root[data-theme=dark] .cB{color:#FF9A5C}
+#theme{position:fixed;top:.8rem;right:.8rem;z-index:5;width:2.4rem;height:2.4rem;border-radius:50%;border:1.5px solid var(--ink);background:var(--white);color:var(--ink);font-size:1.1rem}
+.score{align-self:center;font-weight:700;color:var(--peri)}
+.bar #rz{padding:.65rem .8rem}
+.ngrid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+@media (max-width:640px){.ngrid{grid-template-columns:1fr}}
+#ntxt{min-height:320px;resize:vertical;font:inherit;font-size:1rem;line-height:1.6;padding:.9rem 1rem;border:1.5px solid var(--ink);border-radius:14px;background:var(--white);color:var(--ink)}
+.nprev{min-height:320px;background:var(--white);border-radius:18px;padding:.9rem 1.2rem;box-shadow:6px 6px 0 var(--lilac);font-family:Fraunces,Georgia,serif;font-size:1.15rem;overflow-x:auto}
+.nprev:empty::before{content:"L'aperçu mathématique apparaît ici.";color:var(--soft);font-family:"DM Sans",sans-serif;font-size:.95rem}
+.nprev p{margin:.2rem 0}.nprev h3{margin:.6rem 0 .2rem}.nprev .keep{margin:.5rem 0;padding:.6rem 1rem}
+.nhelp{color:var(--soft);font-size:.88rem;margin:0 0 1rem}.nhelp code{background:var(--lilac);padding:.05rem .35rem;border-radius:5px}
