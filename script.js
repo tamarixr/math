@@ -147,7 +147,7 @@ function render(){
   $('mode').querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.m===mode));
   $('lesson').hidden=mode!=='l';$('train').hidden=mode!=='e';
   if(mode==='l'){$('lesson').innerHTML=L[cur]();if(cur===0){$('ra').oninput=$('rb').oninput=sq;sq()}}
-  else $('list').innerHTML=Array.from({length:5},()=>T[cur].g()).map(e=>`<article class="card"><p class="cons">${e.c}</p><div class="math">${e.q}</div><details><summary>Correction pas à pas</summary>${stepper(e.s)}</details></article>`).join('');
+  else $('list').innerHTML=Array.from({length:5},()=>T[cur].g()).map(e=>`<article class="card"><p class="cons">${e.c}</p><div class="math">${e.q}</div>${ansBox(e)}<details><summary>Correction pas à pas</summary>${stepper(e.s)}</details></article>`).join('');
 }
 T.forEach((t,i)=>{const b=document.createElement('button');b.textContent=t.n;b.onclick=()=>{cur=i;render()};tabs.appendChild(b)});
 $('mode').onclick=e=>{if(e.target.dataset.m){mode=e.target.dataset.m;render()}};
@@ -158,4 +158,32 @@ document.addEventListener('click',e=>{
   if(e.target.classList.contains('next')){const n=w.querySelector('.s:not(.on)');if(n)n.classList.add('on')}
   if(e.target.classList.contains('allb'))w.querySelectorAll('.s').forEach(s=>s.classList.add('on'));
 });
+
+const SYM=['x','²','(',')','+','−','×','/','=','≠','⇔',';','{','}','∅','S = ','ou'];
+const ansOf=e=>{const m=[...e.s.map(x=>x.h).join('').matchAll(/class="ans">(.*?)<\/p>/g)];return m.length?m[m.length-1][1].replace(/<[^>]+>/g,''):''};
+const ansBox=e=>{const t=ansOf(e),k=cur===0?'d':cur===1?'f':'s';return `<div class="abox" data-k="${k}" data-a="${t.replace(/"/g,'&quot;')}"><div class="sym">${SYM.map(c=>`<button type="button" class="sy" data-s="${c}">${c.trim()}</button>`).join('')}<button type="button" class="sy clr" data-s="">Effacer</button></div><div class="arow"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Écris ta réponse ici…" aria-label="Ta réponse"><button type="button" class="chk">Vérifier</button></div><p class="fb" role="status"></p></div>`};
+const ev=(s,x)=>{try{s=s.replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/').replace(/²/g,'^2').replace(/,/g,'.').replace(/\s+/g,'');
+  s=s.replace(/(\d|x|\))(?=x|\()/g,'$1*').replace(/\)(?=\d)/g,')*').replace(/(\d)(?=x)/g,'$1*');
+  let q;do{q=s;s=s.replace(/(x|\d+(?:\.\d+)?|\([^()]*\))\^(\d+)/g,'($1**$2)')}while(q!==s);
+  if(!/^[0-9x+\-*/().]+$/.test(s))return NaN;return new Function('x','return '+s)(x)}catch(_){return NaN}};
+const same=(u,v)=>[-2,-1,.5,1,2,3,7].every(x=>{const a=ev(u,x),b=ev(v,x);return isFinite(a)&&isFinite(b)&&Math.abs(a-b)<1e-6*(1+Math.abs(b))});
+const setV=s=>{s=s.replace(/^\s*S\s*=/i,'').replace(/[{}]/g,'').trim();if(!s||/^(∅|ø|vide)$/i.test(s))return[];return s.split(/;|\bou\b/).map(i=>ev(i.replace(/^\s*x\s*=/,''),0)).sort((a,b)=>a-b)};
+function verify(box){
+  const inp=box.querySelector('input'),fb=box.querySelector('.fb'),k=box.dataset.k,ea=box.dataset.a;
+  let v=inp.value.trim(),ok=false,msg='';
+  if(!v){fb.className='fb bad';fb.textContent='Écris une réponse avant de vérifier.';return}
+  if(k==='s'){const u=setV(v),w=setV(ea);ok=u.length===w.length&&u.every((a,i)=>Math.abs(a-w[i])<1e-9)}
+  else{const r=x=>x.slice(x.lastIndexOf('=')+1),u=r(v),w=ea.slice(ea.indexOf('=')+1);
+    if(same(u,w)){if(k==='d'&&/[()]/.test(u))msg='Le résultat est juste mais pas encore développé et réduit.';else if(k==='f'&&!/\)/.test(u))msg='Le résultat est juste mais pas encore factorisé.';else ok=true}}
+  fb.className='fb '+(ok?'good':'bad');
+  fb.textContent=ok?'✓ Bravo, c\'est correct !':(msg||'✗ Ce n\'est pas la bonne réponse. Ouvre la correction pas à pas.');
+}
+document.addEventListener('click',e=>{
+  const sy=e.target.closest('.sy'),ck=e.target.closest('.chk');
+  if(sy){const i=sy.closest('.abox').querySelector('input'),t=sy.dataset.s;
+    if(!t){i.value='';i.focus();return}
+    const a=i.selectionStart??i.value.length,b=i.selectionEnd??a;i.value=i.value.slice(0,a)+t+i.value.slice(b);i.focus();i.setSelectionRange(a+t.length,a+t.length)}
+  if(ck)verify(ck.closest('.abox'));
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.abox input'))verify(e.target.closest('.abox'))});
 render();

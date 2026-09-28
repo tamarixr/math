@@ -55,3 +55,14 @@ details[open] summary{background:var(--mint)}
 .viz input{accent-color:var(--peri);width:160px;vertical-align:middle}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .cA{color:var(--peri);font-weight:700}.cB{color:#E8590C;font-weight:700}#sqt p{margin:.15rem 0}#sqt em{font-family:"DM Sans",sans-serif;font-size:.85rem;color:var(--soft);font-style:normal}
+
+.abox{margin:.2rem 0 .9rem}
+.sym{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.5rem}
+.sym button{min-width:2.2rem;padding:.3rem .6rem;border-radius:8px;border:1.5px solid var(--lilac);background:var(--paper);color:var(--ink);font-family:Fraunces,Georgia,serif;font-size:1rem;transition:background .2s,transform .2s}
+.sym button:hover{background:var(--lilac);transform:translateY(-1px)}
+.sym .clr{font-family:"DM Sans",sans-serif;font-size:.85rem;color:var(--soft)}
+.arow{display:flex;gap:.5rem;flex-wrap:wrap}
+.arow input{flex:1;min-width:200px;font-family:Fraunces,Georgia,serif;font-size:1.15rem;padding:.55rem .8rem;border:1.5px solid var(--ink);border-radius:10px;background:var(--white);color:var(--ink)}
+.chk{padding:.55rem 1.2rem;border-radius:10px;border:0;background:var(--peri);color:#fff;font-weight:700}
+.fb{margin:.5rem 0 0;font-weight:700;min-height:0}
+.fb.good{color:#0B7A55}.fb.bad{color:#C2410C}
