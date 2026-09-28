@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Algèbre douce — exercices de maths</title>
+<title>Algèbre douce — leçons et exercices de maths</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
@@ -11,16 +11,22 @@
 <body>
 <header>
   <h1>Algèbre douce</h1>
-  <p>Identités remarquables, factorisation, équations produit nul et quotient nul.</p>
+  <p>Comprends la leçon, puis entraîne-toi avec des exercices illimités et des corrections pas à pas.</p>
 </header>
 <nav id="tabs" aria-label="Chapitres"></nav>
+<div class="mode" id="mode" role="tablist">
+  <button data-m="l" role="tab">Leçon</button>
+  <button data-m="e" role="tab">Exercices</button>
+</div>
 <main>
-  <section id="rappel" class="rappel"></section>
-  <div class="bar">
-    <button id="gen" class="primary">Nouveaux exercices</button>
-    <button id="all">Tout corriger</button>
-  </div>
-  <div id="list"></div>
+  <section id="lesson"></section>
+  <section id="train" hidden>
+    <div class="bar">
+      <button id="gen" class="primary">Nouveaux exercices</button>
+      <button id="all">Tout corriger</button>
+    </div>
+    <div id="list"></div>
+  </section>
 </main>
 <script src="script.js"></script>
 </body>
