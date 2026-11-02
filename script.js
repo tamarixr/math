@@ -116,9 +116,6 @@ const iv=(a,ai,b,bi,as,bs)=>({a,ai:a>-INF&&!!ai,b,bi:b<INF&&!!bi,as:as??(a===-IN
 const ivS=o=>`${o.ai?'[':']'}${o.as} ; ${o.bs}${o.bi?']':'['}`;
 const ivQ=o=>o.a===-INF&&o.b===INF?'x ∈ ℝ':o.a===-INF?`x ${o.bi?'≤':'&lt;'} ${o.bs}`:o.b===INF?`x ${o.ai?'≥':'&gt;'} ${o.as}`:`${o.as} ${o.ai?'≤':'&lt;'} x ${o.bi?'≤':'&lt;'} ${o.bs}`;
 const ivW=o=>{const l=o.a===-INF?'':`${o.ai?'supérieurs ou égaux':'strictement supérieurs'} à ${o.as}`,r=o.b===INF?'':`${o.bi?'inférieurs ou égaux':'strictement inférieurs'} à ${o.bs}`;return 'Tous les réels '+(l&&r?l+' et '+r:l||r||'(c\'est ℝ tout entier)')+'.'};
-const setStr=l=>l.length?l.map(ivS).join(' ∪ '):'∅';
-function inter(p,q){const L=p.a>q.a||(p.a===q.a&&!p.ai)?p:q,U=p.b<q.b||(p.b===q.b&&!p.bi)?p:q,r=iv(L.a,L.ai,U.b,U.bi,L.as,U.bs);return r.a<r.b||(r.a===r.b&&r.ai&&r.bi)?[r]:[]}
-function uni(p,q){if(p.a>q.a||(p.a===q.a&&!p.ai&&q.ai))[p,q]=[q,p];if(q.a<p.b||(q.a===p.b&&(p.bi||q.ai))){const U=p.b>q.b||(p.b===q.b&&p.bi)?p:q;return[iv(p.a,p.ai,U.b,U.bi,p.as,U.bs)]}return[p,q]}
 // Droite graduée : rows = [{l:[intervalles], c:0|1|2}]
 function nl(rows){
   const pts=new Map();rows.forEach(r=>r.l.forEach(o=>{if(o.a>-INF)pts.set(o.a,o.as);if(o.b<INF)pts.set(o.b,o.bs)}));
@@ -137,8 +134,8 @@ function rIv(t){const m=bnd(),a=R(-m,m-2),b=R(a+1,m+2);return t===1?iv(a,R(0,1),
 const brk=o=>[o.a>-INF?p(`${o.as} : inégalité ${o.ai?'large (≤ ou ≥) → borne <b>incluse</b> → crochet fermé [':'stricte (&lt; ou &gt;) → borne <b>exclue</b> → crochet ouvert ]'}`):p('−∞ : crochet toujours ouvert ]'),
   o.b<INF?p(`${o.bs} : inégalité ${o.bi?'large → borne <b>incluse</b> → crochet fermé ]':'stricte → borne <b>exclue</b> → crochet ouvert ['}`):p('+∞ : crochet toujours ouvert [')].join('');
 function itv(){
-  const t=R(0,3);
-  if(t<2){const o=rIv(R(0,2)),dr=st('Représenter',nl([{l:[o],c:0}]),p(ivW(o)));
+  const t=R(0,1);
+  {const o=rIv(R(0,2)),dr=st('Représenter',nl([{l:[o],c:0}]),p(ivW(o)));
     if(t===0)return{c:'Écrire sous forme d\'intervalle l\'ensemble des réels x tels que :',q:ivQ(o),k:'i',f:'int',s:[
       st('Repérer les bornes',p(o.a>-INF?`À gauche : <b>${o.as}</b>`:'À gauche : aucune limite, x peut être aussi petit qu\'on veut → <b>−∞</b>'),p(o.b<INF?`À droite : <b>${o.bs}</b>`:'À droite : aucune limite → <b>+∞</b>')),
       st('Choisir les crochets',brk(o)),dr,st('Résultat',p(`x ∈ ${ivS(o)}`),p(ivS(o),'ans'))]};
@@ -146,15 +143,6 @@ function itv(){
       st('Lire les bornes',p(`De ${o.as} à ${o.bs}.`),p('<em>Le plus petit nombre est à gauche, le plus grand à droite.</em>')),
       st('Lire les crochets',p(o.a>-INF?`${o.ai?'[':']'} devant ${o.as} : ${o.ai?'tourné vers le nombre → inclus → ≤ / ≥':'tourné vers l\'extérieur → exclu → &lt; / &gt;'}`:'−∞ : pas de limite à gauche, rien à écrire.'),p(o.b<INF?`${o.bi?']':'['} après ${o.bs} : ${o.bi?'tourné vers le nombre → inclus → ≤':'tourné vers l\'extérieur → exclu → &lt;'}`:'+∞ : pas de limite à droite, rien à écrire.')),
       dr,st('Résultat',p(ivQ(o),'ans'))]};}
-  let A,B,res;
-  do{A=rIv(R(0,2));B=rIv(R(0,2));res=t===2?inter(A,B):uni(A,B)}
-  while((A.a===B.a&&A.b===B.b)||(res.length===1&&res[0].a===res[0].b)||(t===2&&!res.length&&!(lvl===2&&R(0,2)===0)));
-  const sy=t===2?'∩':'∪',ab=`${ivS(A)} ${sy} ${ivS(B)}`;
-  return{c:'Écrire le plus simplement possible.',q:ab,k:'i',f:'int',s:[
-    st('Représenter les deux intervalles',nl([{l:[A],c:0},{l:[B],c:1}]),p(`<span class="cA">A = ${ivS(A)}</span> et <span class="cB">B = ${ivS(B)}</span>`)),
-    st('Ce que demande le symbole',t===2?p('∩ (« inter ») : on garde les réels qui sont dans A <b>et</b> dans B, là où les deux traits se superposent.'):p('∪ (« union ») : on garde les réels qui sont dans A <b>ou</b> dans B, tout ce qui est colorié.')),
-    st('Lire le résultat',nl([{l:[A],c:0},{l:[B],c:1},{l:res,c:2}]),p(`<em>En vert : ${t===2?(res.length?'la partie commune':'aucune partie commune'):'tout ce qui est couvert'}. À une même borne, le nombre est gardé s'il est inclus ${t===2?'dans les deux':'dans au moins un des deux'}.</em>`)),
-    st('Résultat',p(`${ab} = ${setStr(res)}`,'ans'))]};
 }
 const OPS=['&lt;','≤','&gt;','≥'],flip=o=>(o+2)%4,cmp=(o,l,r)=>[l<r,l<=r,l>r,l>=r][o];
 const solIv=(o,n,d)=>{const v=n/d,s=fr(n,d);return o===0?iv(-INF,0,v,0,null,s):o===1?iv(-INF,0,v,1,null,s):o===2?iv(v,0,INF,0,s):iv(v,1,INF,0,s)};
@@ -204,16 +192,14 @@ ${ex('Exemple : (x − 3)(x + 1) / (x + 1) = 0',[st('Valeur interdite',p('x + 1 
 ${box('warn','Erreurs fréquentes','<p>Oublier de chercher la valeur interdite avant de conclure.</p><p>Garder une solution qui annule le dénominateur : elle doit être rejetée.</p>')}
 ${box('keep','À retenir','<p>Ordre de travail : 1) valeur interdite, 2) numérateur = 0, 3) comparer, 4) conclure.</p>')}`,
 4:()=>{const ab=[[0,1,1,1],[0,0,1,0],[0,1,1,0],[0,0,1,1],[0,1,INF,0],[0,0,INF,0],[-INF,0,1,1],[-INF,0,1,0]].map(([a,ai,b,bi])=>iv(a,ai,b,bi,a===-INF?null:'a',b===INF?null:'b'));
-  const A1=iv(-3,1,2,1),B1=iv(0,1,INF,0),A2=iv(-INF,0,1,0),B2=iv(-2,1,5,1),E1=iv(-1,0,4,1);
+  const E1=iv(-1,0,4,1),E2=iv(2,1,INF,0);
   return `<h2>L'idée en une phrase</h2><div class="card"><p>Un <b>intervalle</b>, c'est un morceau de la droite des réels : tous les nombres compris entre deux bornes. Les <b>crochets</b> disent si les bornes font partie du morceau ou non.</p></div>
 <h2>Essaie toi-même</h2><div class="card"><p>Choisis les bornes et les crochets : l'intervalle se dessine.</p><div class="viz"><div><label>Gauche <select id="il"><option value="c">[ incluse</option><option value="o">] exclue</option><option value="i">−∞</option></select></label><label>a = <b id="iva"></b> <input type="range" id="ia" min="-8" max="8" value="-2"></label></div><div><label>Droite <select id="ir"><option value="o">[ exclue</option><option value="c">] incluse</option><option value="i">+∞</option></select></label><label>b = <b id="ivb"></b> <input type="range" id="ib" min="-8" max="8" value="3"></label></div></div><div id="ivo"></div></div>
 <h2>Lire un crochet</h2><div class="card"><p>Crochet <b>tourné vers le nombre</b> → la borne est <b>incluse</b> (inégalité large ≤ ou ≥).</p><p>Crochet <b>tourné vers l'extérieur</b> → la borne est <b>exclue</b> (inégalité stricte &lt; ou &gt;).</p><p>Du côté de l'infini (−∞ ou +∞), le crochet est <b>toujours ouvert</b> : l'infini n'est pas un nombre qu'on peut atteindre.</p></div>
 <h2>Le tableau à connaître</h2><div class="card tw"><table class="tbl"><thead><tr><th>Les réels x tels que</th><th>Intervalle</th><th>Sur la droite</th></tr></thead><tbody>${ab.map(o=>`<tr><td>${ivQ(o)}</td><td>${ivS(o)}</td><td>${nl([{l:[o],c:0}])}</td></tr>`).join('')}</tbody></table><p><em>On écrit toujours le plus petit nombre à gauche, et on sépare les bornes par un point-virgule « ; ».</em></p></div>
-<h2>Intersection et union</h2><div class="card"><div class="f">A ∩ B : les réels qui sont dans A <b>et</b> dans B</div><div class="f">A ∪ B : les réels qui sont dans A <b>ou</b> dans B</div><p>Astuce : dessine A et B l'un au-dessus de l'autre. ∩ = là où les traits se superposent ; ∪ = tout ce qui est colorié.</p></div>
 ${ex('Exemple : écrire −1 &lt; x ≤ 4 avec un intervalle',[st('Bornes',p('De −1 à 4.')),st('Crochets',p('−1 : &lt; donc exclue → ]'),p('4 : ≤ donc incluse → ]')),st('Dessin',nl([{l:[E1],c:0}])),st('Résultat',p('x ∈ ]−1 ; 4]','ans'))])}
-${ex('Exemple : [−3 ; 2] ∩ [0 ; +∞[',[st('Dessiner A et B',nl([{l:[A1],c:0},{l:[B1],c:1}])),st('Partie commune',nl([{l:[A1],c:0},{l:[B1],c:1},{l:inter(A1,B1),c:2}]),p('Les deux traits se superposent de 0 à 2.')),st('Résultat',p('[−3 ; 2] ∩ [0 ; +∞[ = [0 ; 2]','ans'))])}
-${ex('Exemple : ]−∞ ; 1[ ∪ [−2 ; 5]',[st('Dessiner A et B',nl([{l:[A2],c:0},{l:[B2],c:1}])),st('Tout ce qui est colorié',nl([{l:[A2],c:0},{l:[B2],c:1},{l:uni(A2,B2),c:2}]),p('Les deux morceaux se chevauchent : on obtient un seul intervalle.')),st('Résultat',p(']−∞ ; 1[ ∪ [−2 ; 5] = ]−∞ ; 5]','ans'))])}
-${box('warn','Erreurs fréquentes','<p>Écrire [−∞ ou +∞] : du côté de l\'infini, le crochet est <b>toujours ouvert</b>.</p><p>Écrire [5 ; 2] : le plus petit nombre va toujours à gauche.</p><p>Confondre ∩ (et, la partie commune) et ∪ (ou, tout ce qui est colorié).</p>')}
+${ex('Exemple : traduire x ∈ [2 ; +∞[ par une inégalité',[st('Bornes',p('À gauche 2, à droite +∞ : pas de limite à droite.')),st('Crochet',p('[ devant 2 : tourné vers le nombre → 2 est inclus → ≥')),st('Dessin',nl([{l:[E2],c:0}])),st('Résultat',p('x ≥ 2','ans'))])}
+${box('warn','Erreurs fréquentes','<p>Écrire [−∞ ou +∞] : du côté de l\'infini, le crochet est <b>toujours ouvert</b>.</p><p>Écrire [5 ; 2] : le plus petit nombre va toujours à gauche.</p><p>Confondre le sens : ]−∞ ; 3] veut dire x ≤ 3, pas x ≥ 3.</p>')}
 ${box('keep','À retenir','<p>Large (≤, ≥) → crochet fermé, tourné vers le nombre. Stricte (&lt;, &gt;) → crochet ouvert. ∞ → toujours ouvert. En cas de doute : dessine !</p>')}`},
 5:()=>`<h2>L'idée en une phrase</h2><div class="card"><p>Une inéquation se résout <b>presque</b> comme une équation : on isole x. Une seule différence : quand on <b>multiplie ou divise par un nombre négatif</b>, on <b>change le sens</b> du signe. Les solutions forment un intervalle.</p></div>
 <h2>Pourquoi le sens change ?</h2><div class="card"><p>On part de 2 &lt; 5 et on multiplie les deux côtés par k. Bouge k et regarde le signe.</p><div class="viz"><div><label>k = <b id="vk"></b> <input type="range" id="rk" min="-5" max="5" value="-2"></label></div><div id="ko" class="f"></div></div></div>
@@ -267,7 +253,7 @@ document.addEventListener('click',e=>{
 });
 
 const SYM=['x','²','(',')','+','−','×','/','=','≠','⇔',';','{','}','∅','S = ','ou'];
-const SYMI=['x','[',']',' ; ','−','+∞','−∞','<','>','≤','≥','∪','∅','/','S = ','ou'];
+const SYMI=['x','[',']',' ; ','−','+∞','−∞','<','>','≤','≥','∅','/','S = '];
 const ansOf=e=>{const m=[...e.s.map(x=>x.h).join('').matchAll(/class="ans">(.*?)<\/p>/g)];return m.length?m[m.length-1][1].replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'):''};
 const ansBox=e=>{const t=ansOf(e),k=e.k||(cur===0?'d':cur===1?'f':'s');return `<div class="abox" data-k="${k}"${e.f?` data-f="${e.f}"`:''} data-a="${t.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}"><div class="sym">${(k==='i'?SYMI:SYM).map(c=>`<button type="button" class="sy" data-s="${c}">${c.trim()}</button>`).join('')}<button type="button" class="sy clr" data-s="">Effacer</button></div><div class="arow"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${e.f==='ineq'?'ex : −2 < x ≤ 5':e.f==='int'?'ex : ]−∞ ; 3]':'Écris ta réponse ici…'}" aria-label="Ta réponse"><button type="button" class="chk">Vérifier</button><button type="button" class="hint">Indice</button><button type="button" class="show">Réponse</button></div><p class="fb" role="status"></p></div>`};
 const prep=s=>{s=s.replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/').replace(/²/g,'^2').replace(/,/g,'.').replace(/\s+/g,'');
@@ -360,7 +346,7 @@ function fmt(l){
 }
 const fmtAll=t=>t.split('\n').map(l=>!l.trim()?'<br>':l.startsWith('# ')?'<h3>'+fmt(l.slice(2))+'</h3>':l.startsWith('> ')?'<div class="keep">'+fmt(l.slice(2))+'</div>':'<p>'+fmt(l)+'</p>').join('');
 const nt=$('ntxt'),np=$('nprev');
-$('nsym').innerHTML=['x','²','√','π','∞','≤','≥','≠','→','⇔','ℝ','∅','±','×','−','(',')','{','}','[',']','∈','∩','∪'].map(c=>`<button type="button" class="sy" data-s="${c}">${c}</button>`).join('');
+$('nsym').innerHTML=['x','²','√','π','∞','≤','≥','≠','→','⇔','ℝ','∅','±','×','−','(',')','{','}','[',']','∈'].map(c=>`<button type="button" class="sy" data-s="${c}">${c}</button>`).join('');
 let pg=+ls.g('mNp')||0;if(!(pg>=0&&pg<3))pg=0;const nkey=i=>i?'mNotes'+i:'mNotes';nt.value=ls.g(nkey(pg))||'';
 nt.oninput=()=>{ls.s(nkey(pg),nt.value);np.innerHTML=fmtAll(nt.value);$('ncount').textContent=nt.value.length+' caractères'};
 nt.oninput();
@@ -411,7 +397,7 @@ function statsView(){
   $('impf').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const o=JSON.parse(t);Object.keys(o).forEach(k=>/^m[A-Za-z0-9]+$/.test(k)&&ls.s(k,String(o[k])));location.reload()}catch(_){alert('Fichier invalide.')}})};
   $('rall').onclick=()=>{if(confirm('Tout réinitialiser (score, notes, erreurs) ?')){['mScore','mRead','mWrong','mDay','mNotes','mNotes1','mNotes2'].forEach(k=>{try{localStorage.removeItem(k)}catch(_){}});location.reload()}};
 }
-const FM=[['Identités remarquables',['(a+b)^2 = a^2 + 2ab + b^2','(a-b)^2 = a^2 - 2ab + b^2','(a+b)(a-b) = a^2 - b^2']],['Factorisation',['ka + kb = k(a + b)','a^2 - b^2 = (a+b)(a-b)']],['Produit nul',['A*B = 0 <=> A = 0 ou B = 0']],['Quotient nul',['A/B = 0 <=> A = 0 et B != 0']],['Intervalles',['a <= x <= b <=> x ∈ [a ; b]','a < x < b <=> x ∈ ]a ; b[','x >= a <=> x ∈ [a ; +inf[','x < b <=> x ∈ ]−inf ; b[','A ∩ B : dans A et dans B','A ∪ B : dans A ou dans B']],['Inéquations',['a < b et k > 0 => ka < kb','a < b et k < 0 => ka > kb']]];
+const FM=[['Identités remarquables',['(a+b)^2 = a^2 + 2ab + b^2','(a-b)^2 = a^2 - 2ab + b^2','(a+b)(a-b) = a^2 - b^2']],['Factorisation',['ka + kb = k(a + b)','a^2 - b^2 = (a+b)(a-b)']],['Produit nul',['A*B = 0 <=> A = 0 ou B = 0']],['Quotient nul',['A/B = 0 <=> A = 0 et B != 0']],['Intervalles',['a <= x <= b <=> x ∈ [a ; b]','a < x < b <=> x ∈ ]a ; b[','x >= a <=> x ∈ [a ; +inf[','x < b <=> x ∈ ]−inf ; b[']],['Inéquations',['a < b et k > 0 => ka < kb','a < b et k < 0 => ka > kb']]];
 function formsView(){$('forms').innerHTML='<h2>Formules à connaître</h2>'+FM.map(([t,a])=>`<div class="card"><h3>${t}</h3>${a.map(f=>`<div class="frm"><span class="f">${fmt(f)}</span><button data-f="${esc(f)}">Ajouter aux notes</button></div>`).join('')}</div>`).join('')}
 $('forms').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;nt.value+=(nt.value&&!nt.value.endsWith('\n')?'\n':'')+b.dataset.f+'\n';nt.oninput();b.textContent='Ajouté ✓';setTimeout(()=>b.textContent='Ajouter aux notes',1500)};
 $('npage').value=pg;$('npage').onchange=()=>{pg=+$('npage').value;ls.s('mNp',pg);nt.value=ls.g(nkey(pg))||'';nt.oninput()};
