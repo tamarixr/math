@@ -109,3 +109,17 @@ progress{width:100%;height:12px;accent-color:var(--peri)}
 #npage{padding:.6rem .8rem;border-radius:12px;border:1.5px solid var(--ink);background:var(--white);color:var(--ink);font:inherit}
 #lesson .bar{margin-top:1.2rem}
 @media print{body.pe{background:#fff;color:#000}body.pe header,body.pe nav,body.pe .mode,body.pe #tools,body.pe .bar,body.pe .sym,body.pe details,body.pe .fb{display:none!important}body.pe .arow{height:2.5rem;border-bottom:1px solid #999}body.pe .arow *{display:none}body.pe .card{box-shadow:none;border:1px solid #ccc}}
+
+.viz select{font:inherit;padding:.3rem .5rem;margin-left:.3rem;border-radius:8px;border:1.5px solid var(--ink);background:var(--white);color:var(--ink)}
+.viz input:disabled{opacity:.35}
+#ivo .f,#ko p{margin:.15rem 0}#ivo>p{margin:.3rem 0;color:var(--soft)}#ko em{font-family:"DM Sans",sans-serif;font-size:.9rem;color:var(--soft);font-style:normal}
+.nl{display:block;width:100%;max-width:560px;height:auto;margin:.4rem 0;overflow:visible}
+.nl .ax{stroke:var(--ink);stroke-width:1.5;fill:none}.nl .gd{stroke:var(--soft);stroke-width:1;stroke-dasharray:3 4;opacity:.5}
+.nl .lb{fill:var(--ink);font-family:Fraunces,Georgia,serif;font-size:15px;text-anchor:middle}
+.nl .c0{--c:var(--peri)}.nl .c1{--c:#E8590C}.nl .c2{--c:#0B7A55}
+:root[data-theme=dark] .nl .c1{--c:#FF9A5C}:root[data-theme=dark] .nl .c2{--c:#5EE0B0}
+.nl .sg{stroke:var(--c);stroke-width:6}.nl .br{stroke:var(--c);stroke-width:3.5;fill:none;stroke-linejoin:miter}
+.tw{overflow-x:auto}.tbl{width:100%;border-collapse:collapse;font-family:Fraunces,Georgia,serif;font-size:1.08rem}
+.tbl th{font-family:"DM Sans",sans-serif;font-size:.85rem;color:var(--soft);text-align:left;padding:.3rem .5rem}
+.tbl td{padding:.25rem .5rem;border-top:1px solid var(--lilac);white-space:nowrap}.tbl td:last-child{width:45%;min-width:170px}.tbl .nl{margin:0}
+.tw>p em{font-family:"DM Sans",sans-serif;font-size:.88rem;color:var(--soft);font-style:normal}

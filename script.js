@@ -110,6 +110,74 @@ function quot(){
     st('Conclure',p(`S = ${ok.length?setS(ok):'∅'}`,'ans'))]};
 }
 
+// ── Intervalles & inéquations ──
+const INF=Infinity;
+const iv=(a,ai,b,bi,as,bs)=>({a,ai:a>-INF&&!!ai,b,bi:b<INF&&!!bi,as:as??(a===-INF?'−∞':S(a)),bs:bs??(b===INF?'+∞':S(b))});
+const ivS=o=>`${o.ai?'[':']'}${o.as} ; ${o.bs}${o.bi?']':'['}`;
+const ivQ=o=>o.a===-INF&&o.b===INF?'x ∈ ℝ':o.a===-INF?`x ${o.bi?'≤':'&lt;'} ${o.bs}`:o.b===INF?`x ${o.ai?'≥':'&gt;'} ${o.as}`:`${o.as} ${o.ai?'≤':'&lt;'} x ${o.bi?'≤':'&lt;'} ${o.bs}`;
+const ivW=o=>{const l=o.a===-INF?'':`${o.ai?'supérieurs ou égaux':'strictement supérieurs'} à ${o.as}`,r=o.b===INF?'':`${o.bi?'inférieurs ou égaux':'strictement inférieurs'} à ${o.bs}`;return 'Tous les réels '+(l&&r?l+' et '+r:l||r||'(c\'est ℝ tout entier)')+'.'};
+const setStr=l=>l.length?l.map(ivS).join(' ∪ '):'∅';
+function inter(p,q){const L=p.a>q.a||(p.a===q.a&&!p.ai)?p:q,U=p.b<q.b||(p.b===q.b&&!p.bi)?p:q,r=iv(L.a,L.ai,U.b,U.bi,L.as,U.bs);return r.a<r.b||(r.a===r.b&&r.ai&&r.bi)?[r]:[]}
+function uni(p,q){if(p.a>q.a||(p.a===q.a&&!p.ai&&q.ai))[p,q]=[q,p];if(q.a<p.b||(q.a===p.b&&(p.bi||q.ai))){const U=p.b>q.b||(p.b===q.b&&p.bi)?p:q;return[iv(p.a,p.ai,U.b,U.bi,p.as,U.bs)]}return[p,q]}
+// Droite graduée : rows = [{l:[intervalles], c:0|1|2}]
+function nl(rows){
+  const pts=new Map();rows.forEach(r=>r.l.forEach(o=>{if(o.a>-INF)pts.set(o.a,o.as);if(o.b<INF)pts.set(o.b,o.bs)}));
+  const v=[...pts.keys()];let mn=v.length?Math.min(...v):-1,mx=v.length?Math.max(...v):1;if(mx-mn<2){mn-=1;mx+=1}
+  const pd=(mx-mn)*.2+.5;mn-=pd;mx+=pd;
+  const W=560,H=44+rows.length*24,yA=H-24,X=x=>x===-INF?8:x===INF?W-8:28+(x-mn)/(mx-mn)*(W-56);
+  let s=`<svg class="nl" viewBox="0 0 ${W} ${H}" role="img" aria-label="Droite graduée">`;
+  pts.forEach((t,x)=>{s+=`<line class="gd" x1="${X(x)}" y1="6" x2="${X(x)}" y2="${yA}"/><line class="ax" x1="${X(x)}" y1="${yA-5}" x2="${X(x)}" y2="${yA+5}"/><text class="lb" x="${X(x)}" y="${yA+19}">${t}</text>`});
+  s+=`<line class="ax" x1="4" y1="${yA}" x2="${W-4}" y2="${yA}"/><path class="ax" d="M${W-12} ${yA-5}L${W-4} ${yA}L${W-12} ${yA+5}"/>`;
+  rows.forEach((r,i)=>{const y=16+i*24;r.l.forEach(o=>{s+=`<line class="sg c${r.c}" x1="${X(o.a)}" y1="${y}" x2="${X(o.b)}" y2="${y}"/>`;
+    const bk=(x,open)=>{const d=open?7:-7;s+=`<path class="br c${r.c}" d="M${x+d} ${y-10}H${x}V${y+10}H${x+d}"/>`};
+    if(o.a>-INF)bk(X(o.a),o.ai);if(o.b<INF)bk(X(o.b),!o.bi)})});
+  return s+'</svg>'}
+const bnd=()=>Math.max(3,Math.round(6*[.7,1,1.6][lvl]));
+function rIv(t){const m=bnd(),a=R(-m,m-2),b=R(a+1,m+2);return t===1?iv(a,R(0,1),INF,0):t===2?iv(-INF,0,b,R(0,1)):iv(a,R(0,1),b,R(0,1))}
+const brk=o=>[o.a>-INF?p(`${o.as} : inégalité ${o.ai?'large (≤ ou ≥) → borne <b>incluse</b> → crochet fermé [':'stricte (&lt; ou &gt;) → borne <b>exclue</b> → crochet ouvert ]'}`):p('−∞ : crochet toujours ouvert ]'),
+  o.b<INF?p(`${o.bs} : inégalité ${o.bi?'large → borne <b>incluse</b> → crochet fermé ]':'stricte → borne <b>exclue</b> → crochet ouvert ['}`):p('+∞ : crochet toujours ouvert [')].join('');
+function itv(){
+  const t=R(0,3);
+  if(t<2){const o=rIv(R(0,2)),dr=st('Représenter',nl([{l:[o],c:0}]),p(ivW(o)));
+    if(t===0)return{c:'Écrire sous forme d\'intervalle l\'ensemble des réels x tels que :',q:ivQ(o),k:'i',f:'int',s:[
+      st('Repérer les bornes',p(o.a>-INF?`À gauche : <b>${o.as}</b>`:'À gauche : aucune limite, x peut être aussi petit qu\'on veut → <b>−∞</b>'),p(o.b<INF?`À droite : <b>${o.bs}</b>`:'À droite : aucune limite → <b>+∞</b>')),
+      st('Choisir les crochets',brk(o)),dr,st('Résultat',p(`x ∈ ${ivS(o)}`),p(ivS(o),'ans'))]};
+    return{c:'Traduire par une inégalité (ou un encadrement).',q:`x ∈ ${ivS(o)}`,k:'i',f:'ineq',s:[
+      st('Lire les bornes',p(`De ${o.as} à ${o.bs}.`),p('<em>Le plus petit nombre est à gauche, le plus grand à droite.</em>')),
+      st('Lire les crochets',p(o.a>-INF?`${o.ai?'[':']'} devant ${o.as} : ${o.ai?'tourné vers le nombre → inclus → ≤ / ≥':'tourné vers l\'extérieur → exclu → &lt; / &gt;'}`:'−∞ : pas de limite à gauche, rien à écrire.'),p(o.b<INF?`${o.bi?']':'['} après ${o.bs} : ${o.bi?'tourné vers le nombre → inclus → ≤':'tourné vers l\'extérieur → exclu → &lt;'}`:'+∞ : pas de limite à droite, rien à écrire.')),
+      dr,st('Résultat',p(ivQ(o),'ans'))]};}
+  let A,B,res;
+  do{A=rIv(R(0,2));B=rIv(R(0,2));res=t===2?inter(A,B):uni(A,B)}
+  while((A.a===B.a&&A.b===B.b)||(res.length===1&&res[0].a===res[0].b)||(t===2&&!res.length&&!(lvl===2&&R(0,2)===0)));
+  const sy=t===2?'∩':'∪',ab=`${ivS(A)} ${sy} ${ivS(B)}`;
+  return{c:'Écrire le plus simplement possible.',q:ab,k:'i',f:'int',s:[
+    st('Représenter les deux intervalles',nl([{l:[A],c:0},{l:[B],c:1}]),p(`<span class="cA">A = ${ivS(A)}</span> et <span class="cB">B = ${ivS(B)}</span>`)),
+    st('Ce que demande le symbole',t===2?p('∩ (« inter ») : on garde les réels qui sont dans A <b>et</b> dans B, là où les deux traits se superposent.'):p('∪ (« union ») : on garde les réels qui sont dans A <b>ou</b> dans B, tout ce qui est colorié.')),
+    st('Lire le résultat',nl([{l:[A],c:0},{l:[B],c:1},{l:res,c:2}]),p(`<em>En vert : ${t===2?(res.length?'la partie commune':'aucune partie commune'):'tout ce qui est couvert'}. À une même borne, le nombre est gardé s'il est inclus ${t===2?'dans les deux':'dans au moins un des deux'}.</em>`)),
+    st('Résultat',p(`${ab} = ${setStr(res)}`,'ans'))]};
+}
+const OPS=['&lt;','≤','&gt;','≥'],flip=o=>(o+2)%4,cmp=(o,l,r)=>[l<r,l<=r,l>r,l>=r][o];
+const solIv=(o,n,d)=>{const v=n/d,s=fr(n,d);return o===0?iv(-INF,0,v,0,null,s):o===1?iv(-INF,0,v,1,null,s):o===2?iv(v,0,INF,0,s):iv(v,1,INF,0,s)};
+function ineq(){
+  const t=lvl===0?R(0,1):R(0,2),op=R(0,3),O=OPS[op],sd=[];let q,f,g,A,B,D;
+  if(t===0){const a=nz(5),b=nz(9),c=R(-9,9);q=`${lin(a,b)} ${O} ${S(c)}`;f=x=>a*x+b;g=()=>c;A=a;B=b;D=c}
+  else{let a,b,c,d,k,m;
+    if(t===1){do{a=nz(5);c=nz(5)}while(a===c);b=nz(9);d=nz(9);q=`${lin(a,b)} ${O} ${lin(c,d)}`;f=x=>a*x+b}
+    else{do{k=nz(4);c=nz(5)}while(k===c||Math.abs(k)===1);m=nz(6);d=nz(9);a=k;b=k*m;q=`${S(k)}(${lin(1,m)}) ${O} ${lin(c,d)}`;f=x=>k*(x+m);
+      sd.push(st('Développer',p(`${lin(a,b)} ${O} ${lin(c,d)} <em>(on distribue ${S(k)})</em>`)))}
+    g=x=>c*x+d;sd.push(st('Regrouper les x à gauche',p(`${lin(a-c,b)} ${O} ${S(d)} <em>(on ${c>0?'soustrait':'ajoute'} ${cx(Math.abs(c))} des deux côtés : le sens ne change pas)</em>`)));A=a-c;B=b;D=d}
+  const r=D-B;sd.push(st('Isoler le terme en x',p(`${cx(A)} ${O} ${S(D)} ${B>0?'−':'+'} ${Math.abs(B)}`),p(`${cx(A)} ${O} ${S(r)} <em>(on ${B>0?'soustrait':'ajoute'} ${Math.abs(B)} des deux côtés : le sens ne change pas)</em>`)));
+  const o2=A<0?flip(op):op;
+  if(A!==1)sd.push(st(A<0?'Diviser par un négatif : on change le sens !':'Diviser par le coefficient de x',
+    A===-1?p(`x ${OPS[o2]} ${S(-r)} <em>(on multiplie par −1, <b>négatif</b> : le sens change)</em>`):p(`x ${OPS[o2]} ${F(S(r),S(A))} <em>(on divise par ${S(A)}, ${A>0?'<b>positif</b> : le sens ne change pas':'<b>négatif</b> : le sens change'})</em>`),
+    p(`x ${OPS[o2]} ${fr(r,A)}`)));
+  const so=solIv(o2,r,A),v=r/A,x0=o2<2?Math.floor(v)-1:Math.ceil(v)+1;
+  sd.push(st('Représenter',nl([{l:[so],c:2}]),p(`<em>${o2%2?'≤ ou ≥ : la borne est incluse, crochet fermé.':'&lt; ou &gt; : la borne est exclue, crochet ouvert.'}</em>`)));
+  sd.push(st('Conclure',p(`S = ${ivS(so)}`,'ans')));
+  if(cmp(op,f(x0),g(x0)))sd.push(st('Vérifier avec une valeur de S',p(`x = ${S(x0)} : à gauche ${S(f(x0))}, à droite ${S(g(x0))}`),p(`${S(f(x0))} ${O} ${S(g(x0))} est vrai ✓`)));
+  return{c:'Résoudre dans ℝ l\'inéquation.',q,k:'i',f:'int',s:sd};
+}
+
 const box=(k,t,h)=>`<div class="${k}"><b>${t}</b> ${h}</div>`;
 const ex=(t,s)=>`<div class="card"><h3>${t}</h3>${stepper(s)}</div>`;
 const L={
@@ -134,15 +202,47 @@ ${box('keep','À retenir','<p>Produit = 0 : chaque facteur peut donner une solut
 3:()=>`<h2>La règle</h2><div class="card"><div class="f">A / B = 0 ⇔ A = 0 et B ≠ 0</div><p>Une fraction vaut 0 quand son numérateur vaut 0. Mais le dénominateur ne doit jamais être 0 : cette valeur est dite <b>interdite</b>.</p></div>
 ${ex('Exemple : (x − 3)(x + 1) / (x + 1) = 0',[st('Valeur interdite',p('x + 1 = 0 ⇔ x = −1, donc x ≠ −1')),st('Numérateur nul',p('x − 3 = 0 ⇔ x = 3'),p('ou x + 1 = 0 ⇔ x = −1')),st('Comparer',p('−1 est interdite : on la rejette. 3 convient.')),st('Conclure',p('S = {3}','ans'))])}
 ${box('warn','Erreurs fréquentes','<p>Oublier de chercher la valeur interdite avant de conclure.</p><p>Garder une solution qui annule le dénominateur : elle doit être rejetée.</p>')}
-${box('keep','À retenir','<p>Ordre de travail : 1) valeur interdite, 2) numérateur = 0, 3) comparer, 4) conclure.</p>')}`
+${box('keep','À retenir','<p>Ordre de travail : 1) valeur interdite, 2) numérateur = 0, 3) comparer, 4) conclure.</p>')}`,
+4:()=>{const ab=[[0,1,1,1],[0,0,1,0],[0,1,1,0],[0,0,1,1],[0,1,INF,0],[0,0,INF,0],[-INF,0,1,1],[-INF,0,1,0]].map(([a,ai,b,bi])=>iv(a,ai,b,bi,a===-INF?null:'a',b===INF?null:'b'));
+  const A1=iv(-3,1,2,1),B1=iv(0,1,INF,0),A2=iv(-INF,0,1,0),B2=iv(-2,1,5,1),E1=iv(-1,0,4,1);
+  return `<h2>L'idée en une phrase</h2><div class="card"><p>Un <b>intervalle</b>, c'est un morceau de la droite des réels : tous les nombres compris entre deux bornes. Les <b>crochets</b> disent si les bornes font partie du morceau ou non.</p></div>
+<h2>Essaie toi-même</h2><div class="card"><p>Choisis les bornes et les crochets : l'intervalle se dessine.</p><div class="viz"><div><label>Gauche <select id="il"><option value="c">[ incluse</option><option value="o">] exclue</option><option value="i">−∞</option></select></label><label>a = <b id="iva"></b> <input type="range" id="ia" min="-8" max="8" value="-2"></label></div><div><label>Droite <select id="ir"><option value="o">[ exclue</option><option value="c">] incluse</option><option value="i">+∞</option></select></label><label>b = <b id="ivb"></b> <input type="range" id="ib" min="-8" max="8" value="3"></label></div></div><div id="ivo"></div></div>
+<h2>Lire un crochet</h2><div class="card"><p>Crochet <b>tourné vers le nombre</b> → la borne est <b>incluse</b> (inégalité large ≤ ou ≥).</p><p>Crochet <b>tourné vers l'extérieur</b> → la borne est <b>exclue</b> (inégalité stricte &lt; ou &gt;).</p><p>Du côté de l'infini (−∞ ou +∞), le crochet est <b>toujours ouvert</b> : l'infini n'est pas un nombre qu'on peut atteindre.</p></div>
+<h2>Le tableau à connaître</h2><div class="card tw"><table class="tbl"><thead><tr><th>Les réels x tels que</th><th>Intervalle</th><th>Sur la droite</th></tr></thead><tbody>${ab.map(o=>`<tr><td>${ivQ(o)}</td><td>${ivS(o)}</td><td>${nl([{l:[o],c:0}])}</td></tr>`).join('')}</tbody></table><p><em>On écrit toujours le plus petit nombre à gauche, et on sépare les bornes par un point-virgule « ; ».</em></p></div>
+<h2>Intersection et union</h2><div class="card"><div class="f">A ∩ B : les réels qui sont dans A <b>et</b> dans B</div><div class="f">A ∪ B : les réels qui sont dans A <b>ou</b> dans B</div><p>Astuce : dessine A et B l'un au-dessus de l'autre. ∩ = là où les traits se superposent ; ∪ = tout ce qui est colorié.</p></div>
+${ex('Exemple : écrire −1 &lt; x ≤ 4 avec un intervalle',[st('Bornes',p('De −1 à 4.')),st('Crochets',p('−1 : &lt; donc exclue → ]'),p('4 : ≤ donc incluse → ]')),st('Dessin',nl([{l:[E1],c:0}])),st('Résultat',p('x ∈ ]−1 ; 4]','ans'))])}
+${ex('Exemple : [−3 ; 2] ∩ [0 ; +∞[',[st('Dessiner A et B',nl([{l:[A1],c:0},{l:[B1],c:1}])),st('Partie commune',nl([{l:[A1],c:0},{l:[B1],c:1},{l:inter(A1,B1),c:2}]),p('Les deux traits se superposent de 0 à 2.')),st('Résultat',p('[−3 ; 2] ∩ [0 ; +∞[ = [0 ; 2]','ans'))])}
+${ex('Exemple : ]−∞ ; 1[ ∪ [−2 ; 5]',[st('Dessiner A et B',nl([{l:[A2],c:0},{l:[B2],c:1}])),st('Tout ce qui est colorié',nl([{l:[A2],c:0},{l:[B2],c:1},{l:uni(A2,B2),c:2}]),p('Les deux morceaux se chevauchent : on obtient un seul intervalle.')),st('Résultat',p(']−∞ ; 1[ ∪ [−2 ; 5] = ]−∞ ; 5]','ans'))])}
+${box('warn','Erreurs fréquentes','<p>Écrire [−∞ ou +∞] : du côté de l\'infini, le crochet est <b>toujours ouvert</b>.</p><p>Écrire [5 ; 2] : le plus petit nombre va toujours à gauche.</p><p>Confondre ∩ (et, la partie commune) et ∪ (ou, tout ce qui est colorié).</p>')}
+${box('keep','À retenir','<p>Large (≤, ≥) → crochet fermé, tourné vers le nombre. Stricte (&lt;, &gt;) → crochet ouvert. ∞ → toujours ouvert. En cas de doute : dessine !</p>')}`},
+5:()=>`<h2>L'idée en une phrase</h2><div class="card"><p>Une inéquation se résout <b>presque</b> comme une équation : on isole x. Une seule différence : quand on <b>multiplie ou divise par un nombre négatif</b>, on <b>change le sens</b> du signe. Les solutions forment un intervalle.</p></div>
+<h2>Pourquoi le sens change ?</h2><div class="card"><p>On part de 2 &lt; 5 et on multiplie les deux côtés par k. Bouge k et regarde le signe.</p><div class="viz"><div><label>k = <b id="vk"></b> <input type="range" id="rk" min="-5" max="5" value="-2"></label></div><div id="ko" class="f"></div></div></div>
+<h2>Les règles</h2><div class="card"><p><b>Ajouter ou soustraire</b> le même nombre des deux côtés → le sens <b>ne change pas</b>.</p><p><b>Multiplier ou diviser</b> par un nombre <b>positif</b> → le sens <b>ne change pas</b>.</p><p><b>Multiplier ou diviser</b> par un nombre <b>négatif</b> → le sens <b>change</b> : &lt; devient &gt;, ≤ devient ≥ (et inversement).</p><div class="f">a &lt; b et k &gt; 0 ⇒ ka &lt; kb</div><div class="f">a &lt; b et k &lt; 0 ⇒ ka &gt; kb</div></div>
+<h2>Écrire les solutions</h2><div class="card"><p>On termine en écrivant S sous forme d'intervalle (voir le chapitre Intervalles) :</p><div class="f">x ≤ 4 ⇔ S = ]−∞ ; 4]</div><div class="f">x &gt; −3 ⇔ S = ]−3 ; +∞[</div></div>
+${ex('Exemple : 3x − 5 ≤ 7',[st('Isoler le terme en x',p('3x ≤ 7 + 5'),p('3x ≤ 12 <em>(on ajoute 5 : le sens ne change pas)</em>')),st('Diviser par 3',p('x ≤ 4 <em>(3 est positif : le sens ne change pas)</em>')),st('Représenter',nl([{l:[iv(-INF,0,4,1)],c:2}])),st('Conclure',p('S = ]−∞ ; 4]','ans'))])}
+${ex('Exemple : −2x + 3 &gt; 9',[st('Isoler le terme en x',p('−2x &gt; 9 − 3'),p('−2x &gt; 6')),st('Diviser par −2',p(`x &lt; ${F('6','−2')} <em>(−2 est <b>négatif</b> : le sens change !)</em>`),p('x &lt; −3')),st('Représenter',nl([{l:[iv(-INF,0,-3,0)],c:2}])),st('Conclure',p('S = ]−∞ ; −3[','ans'))])}
+${ex('Exemple : 5x − 1 ≥ 2x + 8',[st('Regrouper les x à gauche',p('5x − 2x − 1 ≥ 8'),p('3x − 1 ≥ 8')),st('Isoler',p('3x ≥ 9')),st('Diviser par 3',p('x ≥ 3')),st('Conclure',p('S = [3 ; +∞[','ans')),st('Vérifier avec x = 4',p('5 × 4 − 1 = 19 et 2 × 4 + 8 = 16 : 19 ≥ 16 ✓'))])}
+${box('warn','Erreurs fréquentes','<p>Oublier de changer le sens en divisant par un nombre <b>négatif</b>.</p><p>Changer le sens alors qu\'on a seulement soustrait : x − 4 &lt; −2 donne x &lt; 2, sans changement.</p><p>Mettre un crochet fermé avec &lt; ou &gt; : la borne est alors exclue.</p>')}
+${box('keep','À retenir','<p>1) Regrouper les x d\'un côté. 2) Isoler x. 3) Regarder le signe du nombre par lequel on divise. 4) Écrire S avec un intervalle, puis tester une valeur.</p>')}`
 };
-const T=[{n:'Identités remarquables',g:dev},{n:'Factoriser',g:fac},{n:'Produit nul',g:prod},{n:'Quotient nul',g:quot}];
+const T=[{n:'Identités remarquables',g:dev},{n:'Factoriser',g:fac},{n:'Produit nul',g:prod},{n:'Quotient nul',g:quot},{n:'Intervalles',g:itv},{n:'Inéquations',g:ineq}];
 let cur=+ls.g('mCur')||0,mode=ls.g('mMode')||'l';if(!(cur>=0&&cur<T.length))cur=0;if(!'lensrfo'.includes(mode))mode='l';
 const $=id=>document.getElementById(id),tabs=$('tabs');
 function sq(){
   const a=+$('ra').value,b=+$('rb').value;$('va').textContent=a;$('vb').textContent=b;
   const A=`<span class="cA">${a}</span>`,B=`<span class="cB">${b}</span>`;
   $('sqt').innerHTML=`<p>(${A} + ${B})² = ${A}² + 2 × ${A} × ${B} + ${B}²</p><p>= ${a*a} + ${2*a*b} + ${b*b}</p><p>= ${(a+b)**2}</p><p><em>Vérification : (${a} + ${b})² = ${a+b}² = ${(a+b)**2} ✓</em></p>`;
+}
+function ivz(){
+  const l=$('il').value,r=$('ir').value,a=+$('ia').value,b=+$('ib').value;$('iva').textContent=S(a);$('ivb').textContent=S(b);$('ia').disabled=l==='i';$('ib').disabled=r==='i';
+  const A=l==='i'?-INF:a,B=r==='i'?INF:b;
+  if(A>=B){$('ivo').innerHTML='<p class="fb bad">La borne de gauche doit être plus petite que celle de droite.</p>';return}
+  const o=iv(A,l==='c',B,r==='c');$('ivo').innerHTML=`<div class="f">x ∈ ${ivS(o)}</div><div class="f">${ivQ(o)}</div><p>${ivW(o)}</p>${nl([{l:[o],c:0}])}`;
+}
+function kz(){
+  const k=+$('rk').value,o=$('ko');$('vk').textContent=S(k);
+  if(!k){o.innerHTML='<p>Avec k = 0, on obtient 0 et 0 : on perd toute l\'information. On ne multiplie jamais par 0.</p>';return}
+  const a=2*k,b=5*k;o.innerHTML=`<p>2 &lt; 5</p><p>2 × (${S(k)}) … 5 × (${S(k)})</p><p>${S(a)} <b>${a<b?'&lt;':'&gt;'}</b> ${S(b)}</p><p><em>${k>0?'k est positif : le sens est conservé.':'k est négatif : le sens a changé !'}</em></p>`;
 }
 let curEx=[],chI=null,chS0=0;
 function chrono(){clearInterval(chI);chS0=Date.now();const el=$('chr'),f=()=>{const t=Math.floor((Date.now()-chS0)/1000);el.textContent=String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')};f();chI=setInterval(f,1000)}
@@ -152,7 +252,7 @@ function render(){
   $('mode').querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected',b.dataset.m===mode));
   ['l:lesson','e:train','n:notes','s:stats','r:redo','f:forms','o:lab'].forEach(x=>{const[m,id]=x.split(':');$(id).hidden=mode!==m});
   tabs.hidden=mode!=='l'&&mode!=='e';ls.s('mCur',cur);ls.s('mMode',mode);
-  if(mode==='l'){$('lesson').innerHTML=L[cur]()+'<div class="bar"><button id="rd"></button><button id="nx">Exercices de ce chapitre →</button></div>';rdb();if(cur===0){$('ra').oninput=$('rb').oninput=sq;sq()}}
+  if(mode==='l'){$('lesson').innerHTML=L[cur]()+'<div class="bar"><button id="rd"></button><button id="nx">Exercices de ce chapitre →</button></div>';rdb();if(cur===0){$('ra').oninput=$('rb').oninput=sq;sq()}if(cur===4){['il','ir','ia','ib'].forEach(i=>$(i).oninput=$(i).onchange=ivz);ivz()}if(cur===5){$('rk').oninput=kz;kz()}}
   else if(mode==='e'){curEx=Array.from({length:+$('cnt').value||5},()=>T[cur].g());$('list').innerHTML=curEx.map((e,i)=>`<article class="card" data-i="${i}"><p class="cons">${e.c}</p><div class="math">${e.q}</div>${ansBox(e)}<details><summary>Correction pas à pas</summary>${stepper(e.s)}</details></article>`).join('');chrono()}
   else if(mode==='s')statsView();else if(mode==='r')redoView();else if(mode==='f')formsView();
 }
@@ -167,8 +267,9 @@ document.addEventListener('click',e=>{
 });
 
 const SYM=['x','²','(',')','+','−','×','/','=','≠','⇔',';','{','}','∅','S = ','ou'];
-const ansOf=e=>{const m=[...e.s.map(x=>x.h).join('').matchAll(/class="ans">(.*?)<\/p>/g)];return m.length?m[m.length-1][1].replace(/<[^>]+>/g,''):''};
-const ansBox=e=>{const t=ansOf(e),k=cur===0?'d':cur===1?'f':'s';return `<div class="abox" data-k="${k}" data-a="${t.replace(/"/g,'&quot;')}"><div class="sym">${SYM.map(c=>`<button type="button" class="sy" data-s="${c}">${c.trim()}</button>`).join('')}<button type="button" class="sy clr" data-s="">Effacer</button></div><div class="arow"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Écris ta réponse ici…" aria-label="Ta réponse"><button type="button" class="chk">Vérifier</button><button type="button" class="hint">Indice</button><button type="button" class="show">Réponse</button></div><p class="fb" role="status"></p></div>`};
+const SYMI=['x','[',']',' ; ','−','+∞','−∞','<','>','≤','≥','∪','∅','/','S = ','ou'];
+const ansOf=e=>{const m=[...e.s.map(x=>x.h).join('').matchAll(/class="ans">(.*?)<\/p>/g)];return m.length?m[m.length-1][1].replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&'):''};
+const ansBox=e=>{const t=ansOf(e),k=e.k||(cur===0?'d':cur===1?'f':'s');return `<div class="abox" data-k="${k}"${e.f?` data-f="${e.f}"`:''} data-a="${t.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;')}"><div class="sym">${(k==='i'?SYMI:SYM).map(c=>`<button type="button" class="sy" data-s="${c}">${c.trim()}</button>`).join('')}<button type="button" class="sy clr" data-s="">Effacer</button></div><div class="arow"><input type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="${e.f==='ineq'?'ex : −2 < x ≤ 5':e.f==='int'?'ex : ]−∞ ; 3]':'Écris ta réponse ici…'}" aria-label="Ta réponse"><button type="button" class="chk">Vérifier</button><button type="button" class="hint">Indice</button><button type="button" class="show">Réponse</button></div><p class="fb" role="status"></p></div>`};
 const prep=s=>{s=s.replace(/[−–—]/g,'-').replace(/[×·]/g,'*').replace(/÷/g,'/').replace(/²/g,'^2').replace(/,/g,'.').replace(/\s+/g,'');
   s=s.replace(/(\d|x|\))(?=x|\()/g,'$1*').replace(/\)(?=\d)/g,')*').replace(/(\d)(?=x)/g,'$1*');
   let q;do{q=s;s=s.replace(/(x|\d+(?:\.\d+)?|\([^()]*\))\^(\d+)/g,'($1**$2)')}while(q!==s);
@@ -177,11 +278,53 @@ const mk=s=>{try{const p=prep(s);if(!p)return()=>NaN;const f=new Function('x','r
 const ev=(s,x)=>mk(s)(x);
 const same=(u,v)=>[-2,-1,.5,1,2,3,7].every(x=>{const a=ev(u,x),b=ev(v,x);return isFinite(a)&&isFinite(b)&&Math.abs(a-b)<1e-6*(1+Math.abs(b))});
 const setV=s=>{s=s.replace(/^\s*S\s*=/i,'').replace(/[{}]/g,'').trim();if(!s||/^(∅|ø|vide)$/i.test(s))return[];return s.split(/;|\bou\b/).map(i=>ev(i.replace(/^\s*x\s*=/,''),0)).sort((a,b)=>a-b)};
+const nv=t=>{if(/^\+?I$/.test(t))return INF;if(t==='-I')return -INF;if(/I/.test(t))return NaN;const v=ev(t,0);return isFinite(v)?v:NaN};
+function norm(l){l=l.slice().sort((p,q)=>(p.a-q.a)||(q.ai-p.ai));const r=[];for(const o of l){const c=r[r.length-1];if(c&&(o.a<c.b||(o.a===c.b&&(c.bi||o.ai)))){if(o.b>c.b||(o.b===c.b&&o.bi))r[r.length-1]=iv(c.a,c.ai,o.b,o.bi)}else r.push(o)}return r}
+function parseSet(s){
+  s=s.replace(/^[^<>≤≥=]*=/,'').replace(/[−–—]/g,'-').replace(/≤/g,'<=').replace(/≥/g,'>=').replace(/infinity|infini|inf|∞/gi,'I').replace(/X/g,'x').replace(/\s+/g,'').replace(/^x(∈|\\in)/,'');
+  if(/^(∅|ø|\{\}|vide)$/i.test(s))return{l:[],k:''};
+  if(/^(ℝ|R|IR)$/.test(s))return{l:[iv(-INF,0,INF,0)],k:'int'};
+  const out=[],ks=new Set();
+  for(let q of s.split(/∪|ou|u/i)){
+    if(!q)return null;
+    if(/^[\[\]]/.test(q)){
+      if(!q.includes(';')&&(q.match(/,/g)||[]).length===1)q=q.replace(',',';');
+      const m=q.replace(/,/g,'.').match(/^([\[\]])([^;]+);([^;]+)([\[\]])$/);if(!m)return null;
+      const a=nv(m[2]),b=nv(m[3]);if(isNaN(a)||isNaN(b))return null;
+      if((a===-INF&&m[1]==='[')||(b===INF&&m[4]===']'))return{e:'Du côté de l\'infini, le crochet est toujours ouvert : on écrit ]−∞ et +∞[.'};
+      if(a===INF||b===-INF||a>=b)return{e:'Dans un intervalle, le plus petit nombre s\'écrit à gauche : [petit ; grand].'};
+      out.push(iv(a,m[1]==='[',b,m[4]===']'));ks.add('int');
+    }else{
+      const t=q.replace(/,/g,'.').split(/(<=|>=|<|>)/),lt=o=>o[0]==='<',inc=o=>o.length===2;let o;
+      if(t.length===3&&(t[0]==='x')!==(t[2]==='x')){const x=t[0]==='x',v=nv(x?t[2]:t[0]);if(!isFinite(v))return null;o=lt(t[1])===x?iv(-INF,0,v,inc(t[1])):iv(v,inc(t[1]),INF,0)}
+      else if(t.length===5&&t[2]==='x'&&lt(t[1])===lt(t[3])){const u=nv(t[0]),w=nv(t[4]);if(!isFinite(u)||!isFinite(w))return null;
+        o=lt(t[1])?iv(u,inc(t[1]),w,inc(t[3])):iv(w,inc(t[3]),u,inc(t[1]));
+        if(o.a>=o.b)return{e:'Cet encadrement est impossible : le plus petit nombre doit être à gauche.'}}
+      else return null;
+      out.push(o);ks.add('ineq')}
+  }
+  return{l:norm(out),k:ks.size===1?[...ks][0]:'mix'};
+}
+const eqv=(x,y)=>x===y||Math.abs(x-y)<1e-9;
+function chkSet(v,ea,f){
+  const u=parseSet(v),w=parseSet(ea);
+  if(!u)return{ok:0,msg:'✗ Écriture non reconnue. Exemple : '+(f==='ineq'?'−2 < x ≤ 5':']−∞ ; 3] ou [1 ; 4[')};
+  if(u.e)return{ok:0,msg:'✗ '+u.e};
+  const A=u.l,B=w?w.l:[],n=A.length===B.length;
+  if(!(n&&A.every((o,i)=>eqv(o.a,B[i].a)&&eqv(o.b,B[i].b)&&o.ai===B[i].ai&&o.bi===B[i].bi))){
+    if(n&&A.every((o,i)=>eqv(o.a,B[i].a)&&eqv(o.b,B[i].b)))return{ok:0,msg:'✗ Les bornes sont bonnes, mais vérifie les crochets : borne incluse ou exclue ?'};
+    if(A.length===1&&B.length===1){const a=A[0],b=B[0],fa=a.a>-INF?a.a:a.b,fb=b.a>-INF?b.a:b.b;if((a.a===-INF)!==(a.b===INF)&&(b.a===-INF)!==(b.b===INF)&&(a.a===-INF)!==(b.a===-INF)&&eqv(fa,fb))return{ok:0,msg:'✗ La borne est bonne mais le sens est inversé.'+(cur===5?' As-tu changé le sens en divisant par un nombre négatif ?':'')}}
+    return{ok:0,msg:''};
+  }
+  if(f&&u.k&&u.k!==f)return{ok:0,msg:f==='int'?'C\'est juste, mais écris la réponse avec des intervalles (crochets).':'C\'est juste, mais écris la réponse sous forme d\'inégalité avec x.'};
+  return{ok:1,msg:''};
+}
 function verify(box,q){
   const inp=box.querySelector('input'),fb=box.querySelector('.fb'),k=box.dataset.k,ea=box.dataset.a;
   let v=inp.value.trim(),ok=false,msg='';
   if(!v){fb.className='fb bad';fb.textContent='Écris une réponse avant de vérifier.';return}
-  if(k==='s'){const u=setV(v),w=setV(ea);ok=u.length===w.length&&u.every((a,i)=>Math.abs(a-w[i])<1e-9)}
+  if(k==='i'){const r=chkSet(v,ea,box.dataset.f);ok=r.ok;msg=r.msg}
+  else if(k==='s'){const u=setV(v),w=setV(ea);ok=u.length===w.length&&u.every((a,i)=>Math.abs(a-w[i])<1e-9)}
   else{const r=x=>x.slice(x.lastIndexOf('=')+1),u=r(v),w=ea.slice(ea.indexOf('=')+1);
     if(same(u,w)){if(k==='d'&&/[()]/.test(u))msg='Le résultat est juste mais pas encore développé et réduit.';else if(k==='f'&&!/\)/.test(u))msg='Le résultat est juste mais pas encore factorisé.';else ok=true}}
   fb.className='fb '+(ok?'good':'bad');
@@ -217,7 +360,7 @@ function fmt(l){
 }
 const fmtAll=t=>t.split('\n').map(l=>!l.trim()?'<br>':l.startsWith('# ')?'<h3>'+fmt(l.slice(2))+'</h3>':l.startsWith('> ')?'<div class="keep">'+fmt(l.slice(2))+'</div>':'<p>'+fmt(l)+'</p>').join('');
 const nt=$('ntxt'),np=$('nprev');
-$('nsym').innerHTML=['x','²','√','π','∞','≤','≥','≠','→','⇔','ℝ','∅','±','×','−','(',')','{','}'].map(c=>`<button type="button" class="sy" data-s="${c}">${c}</button>`).join('');
+$('nsym').innerHTML=['x','²','√','π','∞','≤','≥','≠','→','⇔','ℝ','∅','±','×','−','(',')','{','}','[',']','∈','∩','∪'].map(c=>`<button type="button" class="sy" data-s="${c}">${c}</button>`).join('');
 let pg=+ls.g('mNp')||0;if(!(pg>=0&&pg<3))pg=0;const nkey=i=>i?'mNotes'+i:'mNotes';nt.value=ls.g(nkey(pg))||'';
 nt.oninput=()=>{ls.s(nkey(pg),nt.value);np.innerHTML=fmtAll(nt.value);$('ncount').textContent=nt.value.length+' caractères'};
 nt.oninput();
@@ -268,13 +411,13 @@ function statsView(){
   $('impf').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const o=JSON.parse(t);Object.keys(o).forEach(k=>/^m[A-Za-z0-9]+$/.test(k)&&ls.s(k,String(o[k])));location.reload()}catch(_){alert('Fichier invalide.')}})};
   $('rall').onclick=()=>{if(confirm('Tout réinitialiser (score, notes, erreurs) ?')){['mScore','mRead','mWrong','mDay','mNotes','mNotes1','mNotes2'].forEach(k=>{try{localStorage.removeItem(k)}catch(_){}});location.reload()}};
 }
-const FM=[['Identités remarquables',['(a+b)^2 = a^2 + 2ab + b^2','(a-b)^2 = a^2 - 2ab + b^2','(a+b)(a-b) = a^2 - b^2']],['Factorisation',['ka + kb = k(a + b)','a^2 - b^2 = (a+b)(a-b)']],['Produit nul',['A*B = 0 <=> A = 0 ou B = 0']],['Quotient nul',['A/B = 0 <=> A = 0 et B != 0']]];
+const FM=[['Identités remarquables',['(a+b)^2 = a^2 + 2ab + b^2','(a-b)^2 = a^2 - 2ab + b^2','(a+b)(a-b) = a^2 - b^2']],['Factorisation',['ka + kb = k(a + b)','a^2 - b^2 = (a+b)(a-b)']],['Produit nul',['A*B = 0 <=> A = 0 ou B = 0']],['Quotient nul',['A/B = 0 <=> A = 0 et B != 0']],['Intervalles',['a <= x <= b <=> x ∈ [a ; b]','a < x < b <=> x ∈ ]a ; b[','x >= a <=> x ∈ [a ; +inf[','x < b <=> x ∈ ]−inf ; b[','A ∩ B : dans A et dans B','A ∪ B : dans A ou dans B']],['Inéquations',['a < b et k > 0 => ka < kb','a < b et k < 0 => ka > kb']]];
 function formsView(){$('forms').innerHTML='<h2>Formules à connaître</h2>'+FM.map(([t,a])=>`<div class="card"><h3>${t}</h3>${a.map(f=>`<div class="frm"><span class="f">${fmt(f)}</span><button data-f="${esc(f)}">Ajouter aux notes</button></div>`).join('')}</div>`).join('')}
 $('forms').onclick=e=>{const b=e.target.closest('[data-f]');if(!b)return;nt.value+=(nt.value&&!nt.value.endsWith('\n')?'\n':'')+b.dataset.f+'\n';nt.oninput();b.textContent='Ajouté ✓';setTimeout(()=>b.textContent='Ajouter aux notes',1500)};
 $('npage').value=pg;$('npage').onchange=()=>{pg=+$('npage').value;ls.s('mNp',pg);nt.value=ls.g(nkey(pg))||'';nt.oninput()};
 $('lvl').value=lvl;$('lvl').onchange=()=>{lvl=+$('lvl').value;ls.s('mLvl',lvl);render()};
 $('pex').onclick=()=>{document.body.classList.add('pe');print();document.body.classList.remove('pe')};
-document.addEventListener('input',e=>{const i=e.target;if(!i.matches('.abox input'))return;const v=i.value,p=i.selectionStart,n=v.replace(/\^2/g,'²').replace(/\*/g,'×').replace(/<=>/g,'⇔').replace(/!=/g,'≠');if(n!==v){i.value=n;const c=p+n.length-v.length;i.setSelectionRange(c,c)}});
+document.addEventListener('input',e=>{const i=e.target;if(!i.matches('.abox input'))return;const v=i.value,p=i.selectionStart;let n=v.replace(/\^2/g,'²').replace(/\*/g,'×').replace(/<=>/g,'⇔').replace(/!=/g,'≠');if(i.closest('.abox').dataset.k==='i')n=n.replace(/<=/g,'≤').replace(/>=/g,'≥');if(n!==v){i.value=n;const c=p+n.length-v.length;i.setSelectionRange(c,c)}});
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('.tl input'))e.target.closest('.tl').querySelector('button').click()});
 const outp=(id,t,ok)=>{const o=$(id);o.className='fb '+(ok?'good':'bad');o.textContent=t};
 const fmtN=v=>{for(let d=1;d<=12;d++){const n=Math.round(v*d);if(Math.abs(v*d-n)<1e-6)return fr(n,d)}return String(+v.toFixed(6)).replace('-','−')};
